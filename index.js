@@ -76,7 +76,7 @@ function syncDatabases(){
     group by \
         p.ID"
         
-    //console.log(sql)
+    log_(sql)
 
     con.query(sql, function (err1, result) {  
         if (err1) throw err1;                          
@@ -85,67 +85,20 @@ function syncDatabases(){
     });
 }
 
-function syncDatabaseContinue(data){
+function syncDatabaseContinue(data){   
+    let sql = "SELECT id_estoque_utilizavel FROM 3a_estoque_utilizavel ORDER BY id_estoque_utilizavel DESC LIMIT 1";
+    log_(sql)
 
-    var length = Object.keys(data).length;
+    conLocal.query(sql, function (err1, result) {  
+        if (err1) throw err1;   
 
-    console.log("Sincronizando vendas com banco local. Tamanho: ", length)
+        createTicket(result, data)
+    });    
+}
 
-    for (var i = 0; i < length; i++) 
-    {
-        let order_id = data[i].order_id
-        let post_date = data[i].post_date
-        let billing_email = data[i].billing_email
-        let _billing_first_name = data[i]._billing_first_name
-        let _billing_last_name = data[i]._billing_last_name
-        let _billing_address_1 = data[i]._billing_address_1
-        let _billing_address_2 = data[i]._billing_address_2
-        let _billing_city = data[i]._billing_city
-        let _billing_state = data[i]._billing_state
-        let _billing_postcode = data[i]._billing_postcode
-        let _shipping_first_name = data[i]._shipping_first_name
-        let _shipping_last_name = data[i]._shipping_last_name
-        let _shipping_address_1 = data[i]._shipping_address_1
-        let _shipping_address_2 = data[i]._shipping_address_2
-        let _shipping_city = data[i]._shipping_city
-        let _shipping_state = data[i]._shipping_state
-        let _shipping_postcode = data[i]._shipping_postcode
-        let order_total = data[i].order_total
-        let order_tax = data[i].order_tax
-        let paid_date = data[i].paid_date
-        let order_items = data[i].order_items
-
-        let sql = "INSERT INTO 3a_vendas_online (order_id, post_date, billing_email, _billing_first_name, _billing_last_name, _billing_address_1,\
-                    _billing_address_2, _billing_city, _billing_state, _billing_postcode, _shipping_first_name, _shipping_last_name, _shipping_address_1, _shipping_address_2, _shipping_city, _shipping_state,\
-                    _shipping_postcode, order_total, order_tax, paid_date, order_items) VALUES \
-            (" + order_id + ", '" + post_date + "', '" + billing_email + "', '" + _billing_first_name + "', '" + _billing_last_name + "', '" + _billing_address_1 + "', '" + _billing_address_2 + "', '" + _billing_city + "', '" +
-            _billing_state + "', '" + _billing_postcode + "', '" + _shipping_first_name + "', '" + _shipping_last_name + "', '" + _shipping_address_1 + "', '" + _shipping_address_2 + "', '" +
-            _shipping_city + "', '" + _shipping_state + "', '" + _shipping_postcode + "', " + order_total + ", " + order_tax + ", '" + paid_date + "', '"  + order_items + "' );"
+function createTicket(tickets, data){
     
-        //console.log(sql)
-
-        conLocal.query(sql, function (err1, result) {  
-            if (err1) throw err1;            
-        });        
-    };
-
-    getLastTicket(data)    
-}
-
-function getLastTicket(data){
-
-    for (var i = 0; i < data.length; i++){
-        let sql = "SELECT id_estoque_utilizavel FROM 3a_estoque_utilizavel ORDER BY id_estoque_utilizavel DESC LIMIT 1";
-
-        conLocal.query(sql, function (err1, result) {  
-            if (err1) throw err1;            
-            createTicket(result, data)
-        });
-    }    
-}
-
-
-function createTicket(tickets, data){    
+    let order_id = 0;
 
     for (var j = 0; j < tickets.length; j++) {        
 
@@ -154,34 +107,119 @@ function createTicket(tickets, data){
 
         for (var i = 0; i < data.length; i++) {
 
+            order_id = data[i].order_id
             let order_items = data[i].order_items
-            var arr = order_items.toString().split("|");
-
+            var arr = order_items.toString().split("|");            
+            let post_date = data[i].post_date
+            let billing_email = data[i].billing_email
+            let _billing_first_name = data[i]._billing_first_name
+            let _billing_last_name = data[i]._billing_last_name
+            let _billing_address_1 = data[i]._billing_address_1
+            let _billing_address_2 = data[i]._billing_address_2
+            let _billing_city = data[i]._billing_city
+            let _billing_state = data[i]._billing_state
+            let _billing_postcode = data[i]._billing_postcode
+            let _shipping_first_name = data[i]._shipping_first_name
+            let _shipping_last_name = data[i]._shipping_last_name
+            let _shipping_address_1 = data[i]._shipping_address_1
+            let _shipping_address_2 = data[i]._shipping_address_2
+            let _shipping_city = data[i]._shipping_city
+            let _shipping_state = data[i]._shipping_state
+            let _shipping_postcode = data[i]._shipping_postcode
+            let order_total = data[i].order_total
+            let order_tax = data[i].order_tax
+            let paid_date = data[i].paid_date
+            
             for (var k = 0; k < arr.length; k++) {
 
                 let produto = arr[k]                
-                console.log("Criando ingresso", id_ticket_criado, produto)
+                let ticketId = id_ticket_criado++        
+                
+                console.log("Criando ingresso", ticketId, produto)
 
                 let sql = "INSERT INTO 3a_estoque_utilizavel (id_estoque_utilizavel,fk_id_produto,fk_id_tipo_estoque,fk_id_usuarios_inclusao,data_inclusao_utilizavel, impresso) \
-                    VALUES(" + id_ticket_criado + ",\
+                    VALUES(" + ticketId + ",\
                         (SELECT id_produto FROM 3a_produto WHERE nome_produto = '" + produto + "' ORDER BY id_produto DESC LIMIT 1 ),\
-                        1,1,NOW(), 1);"
+                        1,1,NOW(), 1);"                                          
+                        
+                let sqlOnline = "INSERT INTO 3a_vendas_online (order_id, post_date, billing_email, _billing_first_name, _billing_last_name, _billing_address_1,\
+                    _billing_address_2, _billing_city, _billing_state, _billing_postcode, _shipping_first_name, _shipping_last_name, _shipping_address_1, _shipping_address_2, _shipping_city, _shipping_state,\
+                    _shipping_postcode, order_total, order_tax, paid_date, order_items, id_estoque_utilizavel) VALUES \
+                        (" + order_id + ", '" + post_date + "', '" + billing_email + "', '" + _billing_first_name + "', '" + _billing_last_name + "', '" + _billing_address_1 + "', '" + _billing_address_2 + "', '" + _billing_city + "', '" +
+                        _billing_state + "', '" + _billing_postcode + "', '" + _shipping_first_name + "', '" + _shipping_last_name + "', '" + _shipping_address_1 + "', '" + _shipping_address_2 + "', '" +
+                        _shipping_city + "', '" + _shipping_state + "', '" + _shipping_postcode + "', " + order_total + ", " + order_tax + ", '" + paid_date + "', '"  + produto + "', " + ticketId + ");";
 
-                id_ticket_criado++                        
+                log_(sql)
+                log_(sqlOnline)
 
                 conLocal.query(sql, function (err1, result) {  
-                    if (err1) throw err1;   
-                                        
-                    updateTicketsIds(id_estoque_utilizavel, id_ticket_criado)
-                }); 
-            }                                              
-        }
+                    if (err1) throw err1;                                                               
 
-    }        
+                    soldTicket(ticketId, produto, order_total)   
+
+                    conLocal.query(sqlOnline, function (err2, result2) {  
+                        if (err2) throw err2;                                             
+                    });
+                });                
+            }                                                
+        }
+    } 
+
+    updateTicketsSyncIds(order_id)
 }
 
-function updateTicketsIds(id_ticket, id_order){
-    console.log("Atualizando ticket online", id_ticket, id_order)
+function soldTicket(ticketId, produto, valor){
+    console.log("Vendendo ingresso", ticketId, produto)
+
+    let user = 1
+    let idCaixa = 1
+    let obs = "Pagamento Online"
+    let ip = "localhost"
+    let tipoPagamento = 1
+    let validade = 1
+
+    let sql = "INSERT INTO 3a_log_vendas (\
+        fk_id_estoque_utilizavel,\
+        fk_id_usuarios,\
+        fk_id_produto,\
+        fk_id_subtipo_produto,\
+        fk_id_caixa_registrado,\
+        valor_log_venda,\
+        data_log_venda,\
+        obs_log_venda,\
+        ip_maquina_venda,\
+        nome_maquina_venda,\
+        fk_id_tipo_pagamento,\
+        fk_id_validade) \
+    VALUES("
+     + ticketId + "," 
+     + user + ", \
+     (SELECT id_produto FROM 3a_produto WHERE nome_produto = '" + produto + "' ORDER BY id_produto DESC LIMIT 1 ),\
+     (SELECT fk_id_subtipo_produto FROM 3a_produto WHERE nome_produto = '" + produto + "' ORDER BY id_produto DESC LIMIT 1 ),"
+     + idCaixa + "," +
+     + valor + "," +
+     "NOW(), '" 
+     + obs + "', '" 
+     + ip + "'," 
+     + "'none',"
+     + tipoPagamento + ","
+     + validade + ");"
+
+    log_(sql)
+
+    conLocal.query(sql, function (err2, result2) {  
+        if (err2) throw err2;                                             
+    });
+}
+
+function updateTicketsSyncIds(id_order){    
+
+    let sql = "UPDATE wp_posts SET sync = 1 WHERE ID = " + id_order + ";"; 
+    log_(sql)
+
+    con.query(sql, function (err1, result) {  
+        if (err1) throw err1;                    
+    });    
 }
 
 
