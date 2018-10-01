@@ -1,7 +1,6 @@
 let mysql = require('mysql');
 let express =  require('express');
 let app = express();
-let http = require('http').Server(app);
 let bodyParser = require('body-parser');
 let logger = require('morgan');
 let methodOverride = require('method-override')
@@ -76,6 +75,8 @@ function syncDatabases(){
         post_status = 'wc-completed' \
     group by \
         p.ID"
+        
+    //console.log(sql)
 
     con.query(sql, function (err1, result) {  
         if (err1) throw err1;                          
@@ -87,7 +88,7 @@ function syncDatabases(){
 function syncDatabaseContinue(data){
 
     var length = Object.keys(data).length;
-    console.log(length);
+    console.log("Sincronizando vendas com banco local. Tamanho: ", length)
 
     for (var i = 0; i < length; i++) 
     {
@@ -124,104 +125,56 @@ function syncDatabaseContinue(data){
 
         conLocal.query(sql, function (err1, result) {  
             if (err1) throw err1;            
-        });
-        
+        });        
     };
+
+    getLastTicket(data)    
 }
 
-app.get('/getCategories', function(req, res){
+function getLastTicket(data){
 
-    let sql = "SELECT wp_terms.* \
-            FROM wp_terms \
-        LEFT JOIN wp_term_taxonomy ON wp_terms.term_id = wp_term_taxonomy.term_id \
-        WHERE wp_term_taxonomy.taxonomy = 'product_cat'";
+    for (var i = 0; i < data.length; i++){
+        let sql = "SELECT id_estoque_utilizavel FROM 3a_estoque_utilizavel ORDER BY id_estoque_utilizavel DESC LIMIT 1";
 
-    log_(sql)
+        conLocal.query(sql, function (err1, result) {  
+            if (err1) throw err1;            
+            createTicket(result, data)
+        });
+    }
+    
+}
 
-    con.query(sql, function (err1, result) {  
-        if (err1) throw err1;                          
-        res.json({"success": result});  
-    });
-});
 
-app.get('/getProductCategory', function(req, res){
+function createTicket(tickets, data){
 
-    let sql = "SELECT wp_term_relationships.*,wp_terms.* \
-                FROM wp_term_relationships \
-             LEFT JOIN wp_posts  ON wp_term_relationships.object_id = wp_posts.ID \
-             LEFT JOIN wp_term_taxonomy ON wp_term_taxonomy.term_taxonomy_id = wp_term_relationships.term_taxonomy_id \
-             LEFT JOIN wp_terms ON wp_terms.term_id = wp_term_relationships.term_taxonomy_id \
-        WHERE post_type = 'product' \
-        AND taxonomy = 'product_cat' \
-        AND  object_id = 167";
+    for (var j = 0; j < tickets.length; j++) {        
 
-    log_(sql)
+        let id_estoque_utilizavel = tickets[j].id_estoque_utilizavel
+        let id_ticket_criado = id_estoque_utilizavel++
 
-    con.query(sql, function (err1, result) {  
-        if (err1) throw err1;                          
-        res.json({"success": result});  
-    });
-});
+        console.log("Criando ingresso", id_ticket_criado, id_estoque_utilizavel)
 
-app.get('/getAllOrders', function(req, res) {
+        for (var i = 0; i < data.length; i++) {
 
-    let sql = "SELECT \
-        p.ID as order_id,\
-        p.post_date,\
-        max( CASE WHEN pm.meta_key = '_billing_email' and p.ID = pm.post_id THEN pm.meta_value END ) as billing_email,\
-        max( CASE WHEN pm.meta_key = '_billing_phone' and p.ID = pm.post_id THEN pm.meta_value END ) as billing_phone,\
-        max( CASE WHEN pm.meta_key = '_billing_first_name' and p.ID = pm.post_id THEN pm.meta_value END ) as _billing_first_name,\
-        max( CASE WHEN pm.meta_key = '_billing_last_name' and p.ID = pm.post_id THEN pm.meta_value END ) as _billing_last_name,\
-        max( CASE WHEN pm.meta_key = '_order_total' and p.ID = pm.post_id THEN pm.meta_value END ) as order_total,\
-        max( CASE WHEN pm.meta_key = '_order_tax' and p.ID = pm.post_id THEN pm.meta_value END ) as order_tax,\
-        max( CASE WHEN pm.meta_key = '_paid_date' and p.ID = pm.post_id THEN pm.meta_value END ) as paid_date,\
-        max( CASE WHEN p.ID = wptr.object_id THEN wptr.term_taxonomy_id END ) as status \
-    FROM \
-        wp_posts as p,\
-        wp_postmeta as pm,\
-        wp_term_relationships as wptr \
-    WHERE \
-        p.ID = pm.post_id \
-    GROUP BY \
-        p.ID"
+            //console.log(data[i])
+            let order_items = data[i].order_items
 
-    log_(sql)
+            var arr = order_items.toString().split("|");
+            console.log(arr);
 
-    con.query(sql, function (err1, result) {  
-        if (err1) throw err1;                          
-        res.json({"success": result});  
-    });
-});
+            let sql = "INSERT INTO 3a_estoque_utilizavel (id_estoque_utilizavel,fk_id_produto,fk_id_tipo_estoque,fk_id_usuarios_inclusao,data_inclusao_utilizavel) \
+                    VALUES(" + id_ticket_criado + ",\
+                        (SELECT id_produto FROM 3a_produto WHERE nome_produto = '" + order_items + "' ORDER BY id_produto DESC LIMIT 1 ),\
+                        1,1,NOW());"
 
-app.get('/getBillingOrders', function(req, res) {
+           // console.log(sql)    
+            
+           /* conLocal.query(sql, function (err1, result) {  
+                if (err1) throw err1;            
+            });   */     
+      }
 
-    let sql = "SELECT u.id, u.user_login, u.user_email,\
-    max( CASE WHEN m.meta_key = 'billing_email' and u.ID = m.user_id THEN m.meta_value END   ) as billing_email,\
-        max( CASE WHEN m.meta_key = \'billing_first_name\' and u.id = m.user_id THEN m.meta_value END ) as billing_first_name,\
-        max( CASE WHEN m.meta_key = \'billing_last_name\' and u.id = m.user_id THEN m.meta_value END ) as billing_last_name,\
-        max( CASE WHEN m.meta_key = \'billing_address_1\' and u.id = m.user_id THEN m.meta_value END ) as billing_address_1,\
-        max( CASE WHEN m.meta_key = \'billing_address_2\' and u.id = m.user_id THEN m.meta_value END ) as billing_address_2,\
-        max( CASE WHEN m.meta_key = \'billing_city\' and u.id = m.user_id THEN m.meta_value END ) as billing_city,\
-        max( CASE WHEN m.meta_key = \'billing_state\' and u.id = m.user_id THEN m.meta_value END ) as billing_state,\
-        max( CASE WHEN m.meta_key = \'billing_postcode\' and u.id = m.user_id THEN m.meta_value END ) as billing_postcode,\
-        max( CASE WHEN m.meta_key = \'shipping_first_name\' and u.id = m.user_id THEN m.meta_value END ) as shipping_first_name,\
-        max( CASE WHEN m.meta_key = \'shipping_last_name\' and u.id = m.user_id THEN m.meta_value END ) as shipping_last_name,\
-        max( CASE WHEN m.meta_key = \'shipping_address_1\' and u.id = m.user_id THEN m.meta_value END ) as shipping_address_1,\
-        max( CASE WHEN m.meta_key = \'shipping_address_2\' and u.id = m.user_id THEN m.meta_value END ) as shipping_address_2,\
-        max( CASE WHEN m.meta_key = \'shipping_city\' and u.id = m.user_id THEN m.meta_value END ) as shipping_city,\
-        max( CASE WHEN m.meta_key = \'shipping_state\' and u.id = m.user_id THEN m.meta_value END ) as _shipping_state,\
-        max( CASE WHEN m.meta_key = \'shipping_postcode\' and u.id = m.user_id THEN m.meta_value END ) as _shipping_postcode \
-    FROM wp_users u \
-        LEFT JOIN wp_usermeta m ON  u.ID = m.user_id \
-        group by u.ID";
+    }        
+}
 
-    log_(sql)
 
-    con.query(sql, function (err1, result) {  
-        if (err1) throw err1;                          
-        res.json({"success": result});  
-    });
-
-});
-
-http.listen(8085);
