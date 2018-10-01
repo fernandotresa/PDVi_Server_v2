@@ -88,6 +88,7 @@ function syncDatabases(){
 function syncDatabaseContinue(data){
 
     var length = Object.keys(data).length;
+
     console.log("Sincronizando vendas com banco local. Tamanho: ", length)
 
     for (var i = 0; i < length; i++) 
@@ -140,41 +141,47 @@ function getLastTicket(data){
             if (err1) throw err1;            
             createTicket(result, data)
         });
-    }
-    
+    }    
 }
 
 
-function createTicket(tickets, data){
+function createTicket(tickets, data){    
 
     for (var j = 0; j < tickets.length; j++) {        
 
         let id_estoque_utilizavel = tickets[j].id_estoque_utilizavel
-        let id_ticket_criado = id_estoque_utilizavel++
-
-        console.log("Criando ingresso", id_ticket_criado, id_estoque_utilizavel)
+        let id_ticket_criado = ++id_estoque_utilizavel
 
         for (var i = 0; i < data.length; i++) {
 
-            //console.log(data[i])
             let order_items = data[i].order_items
-
             var arr = order_items.toString().split("|");
-            console.log(arr);
 
-            let sql = "INSERT INTO 3a_estoque_utilizavel (id_estoque_utilizavel,fk_id_produto,fk_id_tipo_estoque,fk_id_usuarios_inclusao,data_inclusao_utilizavel) \
+            for (var k = 0; k < arr.length; k++) {
+
+                let produto = arr[k]                
+                console.log("Criando ingresso", id_ticket_criado, produto)
+
+                let sql = "INSERT INTO 3a_estoque_utilizavel (id_estoque_utilizavel,fk_id_produto,fk_id_tipo_estoque,fk_id_usuarios_inclusao,data_inclusao_utilizavel, impresso) \
                     VALUES(" + id_ticket_criado + ",\
-                        (SELECT id_produto FROM 3a_produto WHERE nome_produto = '" + order_items + "' ORDER BY id_produto DESC LIMIT 1 ),\
-                        1,1,NOW());"
+                        (SELECT id_produto FROM 3a_produto WHERE nome_produto = '" + produto + "' ORDER BY id_produto DESC LIMIT 1 ),\
+                        1,1,NOW(), 1);"
 
-           // console.log(sql)    
-            
-           /* conLocal.query(sql, function (err1, result) {  
-                if (err1) throw err1;            
-            });   */     
-      }
+                id_ticket_criado++                        
+
+                conLocal.query(sql, function (err1, result) {  
+                    if (err1) throw err1;   
+                                        
+                    updateTicketsIds(id_estoque_utilizavel, id_ticket_criado)
+                }); 
+            }                                              
+        }
 
     }        
+}
+
+function updateTicketsIds(id_ticket, id_order){
+    console.log("Atualizando ticket online", id_ticket, id_order)
 }
 
 
