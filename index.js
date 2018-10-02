@@ -5,6 +5,7 @@ let bodyParser = require('body-parser');
 let logger = require('morgan');
 let methodOverride = require('method-override')
 let cors = require('cors');
+let http = require('http').Server(app);
 
 app.use(logger('dev'));
 app.use(bodyParser.json());
@@ -30,7 +31,7 @@ let con = mysql.createConnection({
 	log_("Database woocommerce conectado!")		    
     log_("Aguardando conexões ...")	
 
-    syncDatabases()
+    //syncDatabases()
 });
 
 conLocal.connect(function(err) {
@@ -216,8 +217,8 @@ function soldTicket(ticketId, produto, valor){
 
 function updateTicketsSyncIds(id_order){    
 
-    log_("Finalizando sincronização....")
-    
+    log_("Finalizando sincronização")
+
     let sql = "UPDATE wp_posts SET sync = 1 WHERE ID = " + id_order + ";"; 
     //log_(sql)
 
@@ -226,4 +227,36 @@ function updateTicketsSyncIds(id_order){
     });    
 }
 
+app.post('/getAllOrders', function(req, res) {    
 
+    let start = req.body.start
+    let end = req.body.end
+
+    let sql = "SELECT * FROM 3a_vendas_online WHERE datetime BETWEEN '" + start + "' AND '" + end + "';"
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {  
+        if (err1) throw err1;                          
+        res.json({"success": result});  
+    });
+});
+
+app.post('/getAllOrdersByName', function(req, res) {
+
+    let name = req.body.name
+    let start = req.body.start
+    let end = req.body.end
+
+    let sql = "SELECT * FROM 3a_vendas_online WHERE _billing_first_name LIKE '%" + name + "%' \
+        AND datetime BETWEEN '" + start + "' AND '" + end + "';"
+
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {  
+        if (err1) throw err1;                          
+        res.json({"success": result});  
+    });
+});
+
+
+http.listen(8085);
