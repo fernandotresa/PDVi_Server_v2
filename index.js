@@ -76,7 +76,7 @@ function syncDatabases(){
     group by \
         p.ID"
         
-    log_(sql)
+    //log_(sql)
 
     con.query(sql, function (err1, result) {  
         if (err1) throw err1;                          
@@ -86,8 +86,10 @@ function syncDatabases(){
 }
 
 function syncDatabaseContinue(data){   
+    log_("Verificando último id estoque utilizavel....")
+
     let sql = "SELECT id_estoque_utilizavel FROM 3a_estoque_utilizavel ORDER BY id_estoque_utilizavel DESC LIMIT 1";
-    log_(sql)
+    //log_(sql)
 
     conLocal.query(sql, function (err1, result) {  
         if (err1) throw err1;   
@@ -135,7 +137,7 @@ function createTicket(tickets, data){
                 let produto = arr[k]                
                 let ticketId = id_ticket_criado++        
                 
-                console.log("Criando ingresso", ticketId, produto)
+                console.log("Criando ingresso:", ticketId, produto)
 
                 let sql = "INSERT INTO 3a_estoque_utilizavel (id_estoque_utilizavel,fk_id_produto,fk_id_tipo_estoque,fk_id_usuarios_inclusao,data_inclusao_utilizavel, impresso) \
                     VALUES(" + ticketId + ",\
@@ -149,8 +151,8 @@ function createTicket(tickets, data){
                         _billing_state + "', '" + _billing_postcode + "', '" + _shipping_first_name + "', '" + _shipping_last_name + "', '" + _shipping_address_1 + "', '" + _shipping_address_2 + "', '" +
                         _shipping_city + "', '" + _shipping_state + "', '" + _shipping_postcode + "', " + order_total + ", " + order_tax + ", '" + paid_date + "', '"  + produto + "', " + ticketId + ");";
 
-                log_(sql)
-                log_(sqlOnline)
+                //log_(sql)
+                //log_(sqlOnline)
 
                 conLocal.query(sql, function (err1, result) {  
                     if (err1) throw err1;                                                               
@@ -205,7 +207,7 @@ function soldTicket(ticketId, produto, valor){
      + tipoPagamento + ","
      + validade + ");"
 
-    log_(sql)
+    //log_(sql)
 
     conLocal.query(sql, function (err2, result2) {  
         if (err2) throw err2;                                             
@@ -214,8 +216,10 @@ function soldTicket(ticketId, produto, valor){
 
 function updateTicketsSyncIds(id_order){    
 
+    log_("Finalizando sincronização....")
+    
     let sql = "UPDATE wp_posts SET sync = 1 WHERE ID = " + id_order + ";"; 
-    log_(sql)
+    //log_(sql)
 
     con.query(sql, function (err1, result) {  
         if (err1) throw err1;                    
