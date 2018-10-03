@@ -1,0 +1,27 @@
+{
+  "name": "woocommerce-server",
+  "version": "1.0.0",
+  "description": "A tiny node server to query woocommerce stuff",
+  "main": "index.js",
+  "dependencies": {
+    "cors": "^2.8.4",
+    "express": "^4.16.3",
+    "method-override": "^3.0.0",
+    "morgan": "^1.9.1",
+    "mysql": "^2.16.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/diegoshaman/woocommerce-server.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/diegoshaman/woocommerce-server/issues"
+  },
+  "homepage": "https://github.com/diegoshaman/woocommerce-server#readme"
+}
