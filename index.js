@@ -13,10 +13,10 @@ app.use(methodOverride());
 app.use(cors());
 
 let con = mysql.createConnection({
-    host: "dev.cxr1ymefkdso.us-east-1.rds.amazonaws.com",
+    host: "venda-online.cacasorqzf2r.sa-east-1.rds.amazonaws.com",
     user: "bilheteria",
     password: "c4d3Oc0ntr4t0",
-    database: "bilheteria"
+    database: "vendas_online"
  });
 
  let conLocal = mysql.createConnection({
