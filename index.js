@@ -20,18 +20,20 @@ let con = mysql.createConnection({
  });
 
  let conLocal = mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "senhaRoot",
-    database: "3a_access"
+    host: "10.0.2.180",
+    user: "3access",
+    password: "3access",
+    database: "3access"
  });
 
  con.connect(function(err) {
     if (err) throw err;
 	log_("Database woocommerce conectado!")		    
     log_("Aguardando conexões ...")	
-
-    //syncDatabases()
+    
+	 setInterval(function(){ 
+		syncDatabases()
+	 }, 30000);
 });
 
 conLocal.connect(function(err) {
