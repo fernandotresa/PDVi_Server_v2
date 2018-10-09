@@ -7,6 +7,8 @@ let methodOverride = require('method-override')
 let cors = require('cors');
 let http = require('http').Server(app);
 
+let synctime = 30000;
+
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(methodOverride());
@@ -23,7 +25,7 @@ let con = mysql.createConnection({
     host: "10.0.2.180",
     user: "3access",
     password: "3access",
-    database: "3access"
+    database: "zoosp"
  });
 
  con.connect(function(err) {
@@ -33,7 +35,7 @@ let con = mysql.createConnection({
     
 	 setInterval(function(){ 
 		syncDatabases()
-	 }, 30000);
+	 }, synctime);
 });
 
 conLocal.connect(function(err) {
@@ -47,6 +49,8 @@ function log_(str){
 }
 
 function syncDatabases(){
+	log_("Sincronizando banco de dados...")
+	
     let sql = "select \
         p.ID as order_id,\
         p.post_date,\
@@ -75,6 +79,7 @@ function syncDatabases(){
         join wp_woocommerce_order_items oi on p.ID = oi.order_id \
     where \
         post_type = 'shop_order' and \
+		sync = 1 and \
         post_status = 'wc-completed' \
     group by \
         p.ID"
