@@ -7,7 +7,7 @@ let methodOverride = require('method-override')
 let cors = require('cors');
 let http = require('http').Server(app);
 
-let synctime = 30000;
+let synctime = 10000;
 
 app.use(logger('dev'));
 app.use(bodyParser.json());
@@ -21,11 +21,18 @@ let con = mysql.createConnection({
     database: "vendas_online"
  });
 
- let conLocal = mysql.createConnection({
+ /*let conLocal = mysql.createConnection({
     host: "10.0.2.180",
     user: "3access",
     password: "3access",
     database: "zoosp"
+ });*/
+
+ let conLocal = mysql.createConnection({
+    host: "localhost",
+    user: "root",
+    password: "senhaRoot",
+    database: "3a_access"
  });
 
  con.connect(function(err) {
@@ -45,11 +52,11 @@ conLocal.connect(function(err) {
 });
 
 function log_(str){
-    console.log(str)
+    console.log("[" + new Date() + "]", str)
 }
 
 function syncDatabases(){
-	log_("Sincronizando banco de dados...")
+	log_("Verificando novas vendas")
 	
     let sql = "select \
         p.ID as order_id,\
@@ -79,7 +86,7 @@ function syncDatabases(){
         join wp_woocommerce_order_items oi on p.ID = oi.order_id \
     where \
         post_type = 'shop_order' and \
-		sync = 1 and \
+		sync = 0 and \
         post_status = 'wc-completed' \
     group by \
         p.ID"
@@ -89,12 +96,13 @@ function syncDatabases(){
     con.query(sql, function (err1, result) {  
         if (err1) throw err1;                          
         
-        syncDatabaseContinue(result)
+        if(result.length > 0)
+            syncDatabaseContinue(result)
     });
 }
 
 function syncDatabaseContinue(data){   
-    log_("Verificando último id estoque utilizavel....")
+    log_("Preparando base local para sincronização")
 
     let sql = "SELECT id_estoque_utilizavel FROM 3a_estoque_utilizavel ORDER BY id_estoque_utilizavel DESC LIMIT 1";
     //log_(sql)
@@ -118,6 +126,8 @@ function createTicket(tickets, data){
         for (var i = 0; i < data.length; i++) {
 
             order_id = data[i].order_id
+            updateTicketsSyncIds(order_id)
+
             let order_items = data[i].order_items
             var arr = order_items.toString().split("|");            
             let post_date = data[i].post_date
@@ -145,7 +155,8 @@ function createTicket(tickets, data){
                 let produto = arr[k]                
                 let ticketId = id_ticket_criado++        
                 
-                console.log("Criando ingresso:", ticketId, produto)
+                let msg = "Criando ingresso: " +  ticketId + " Produto: " + produto + " Ordem de venda: " + order_id
+                log_(msg)
 
                 let sql = "INSERT INTO 3a_estoque_utilizavel (id_estoque_utilizavel,fk_id_produto,fk_id_tipo_estoque,fk_id_usuarios_inclusao,data_inclusao_utilizavel, impresso) \
                     VALUES(" + ticketId + ",\
@@ -168,18 +179,17 @@ function createTicket(tickets, data){
                     soldTicket(ticketId, produto, order_total)   
 
                     conLocal.query(sqlOnline, function (err2, result2) {  
-                        if (err2) throw err2;                                             
+                        if (err2) throw err2;                          
                     });
                 });                
             }                                                
         }
-    } 
-
-    updateTicketsSyncIds(order_id)
+    }     
 }
 
 function soldTicket(ticketId, produto, valor){
-    console.log("Vendendo ingresso", ticketId, produto)
+    let msg = "Vendendo ingresso: " + ticketId + " Produto: " + produto
+    console.log()
 
     let user = 1
     let idCaixa = 1
@@ -223,9 +233,7 @@ function soldTicket(ticketId, produto, valor){
 }
 
 function updateTicketsSyncIds(id_order){    
-
-    log_("Finalizando sincronização")
-
+    
     let sql = "UPDATE wp_posts SET sync = 1 WHERE ID = " + id_order + ";"; 
     //log_(sql)
 
