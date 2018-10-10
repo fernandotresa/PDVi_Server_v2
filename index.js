@@ -64,6 +64,7 @@ function syncDatabases(){
         max( CASE WHEN pm.meta_key = '_billing_email' and p.ID = pm.post_id THEN pm.meta_value END ) as billing_email,\
         max( CASE WHEN pm.meta_key = '_billing_first_name' and p.ID = pm.post_id THEN pm.meta_value END ) as _billing_first_name,\
         max( CASE WHEN pm.meta_key = '_billing_last_name' and p.ID = pm.post_id THEN pm.meta_value END ) as _billing_last_name,\
+        max( CASE WHEN pm.meta_key = '_billing_cpf' and p.ID = pm.post_id THEN pm.meta_value END ) as _billing_cpf,\
         max( CASE WHEN pm.meta_key = '_billing_address_1' and p.ID = pm.post_id THEN pm.meta_value END ) as _billing_address_1,\
         max( CASE WHEN pm.meta_key = '_billing_address_2' and p.ID = pm.post_id THEN pm.meta_value END ) as _billing_address_2,\
         max( CASE WHEN pm.meta_key = '_billing_city' and p.ID = pm.post_id THEN pm.meta_value END ) as _billing_city,\
@@ -137,6 +138,7 @@ function createTicket(tickets, data){
             let _billing_address_1 = data[i]._billing_address_1
             let _billing_address_2 = data[i]._billing_address_2
             let _billing_city = data[i]._billing_city
+            let _billing_cpf = data[i]._billing_cpf
             let _billing_state = data[i]._billing_state
             let _billing_postcode = data[i]._billing_postcode
             let _shipping_first_name = data[i]._shipping_first_name
@@ -155,7 +157,7 @@ function createTicket(tickets, data){
                 let produto = arr[k]                
                 let ticketId = id_ticket_criado++        
                 
-                let msg = "Criando ingresso: " +  ticketId + " Produto: " + produto + " Ordem de venda: " + order_id
+                let msg = "Criando ingresso: " +  ticketId + " - Produto: " + produto + " - Ordem de venda: " + order_id
                 log_(msg)
 
                 let sql = "INSERT INTO 3a_estoque_utilizavel (id_estoque_utilizavel,fk_id_produto,fk_id_tipo_estoque,fk_id_usuarios_inclusao,data_inclusao_utilizavel, impresso) \
@@ -165,10 +167,10 @@ function createTicket(tickets, data){
                         
                 let sqlOnline = "INSERT INTO 3a_vendas_online (order_id, post_date, billing_email, _billing_first_name, _billing_last_name, _billing_address_1,\
                     _billing_address_2, _billing_city, _billing_state, _billing_postcode, _shipping_first_name, _shipping_last_name, _shipping_address_1, _shipping_address_2, _shipping_city, _shipping_state,\
-                    _shipping_postcode, order_total, order_tax, paid_date, order_items, id_estoque_utilizavel) VALUES \
+                    _shipping_postcode, order_total, order_tax, paid_date, order_items, id_estoque_utilizavel, _billing_cpf) VALUES \
                         (" + order_id + ", '" + post_date + "', '" + billing_email + "', '" + _billing_first_name + "', '" + _billing_last_name + "', '" + _billing_address_1 + "', '" + _billing_address_2 + "', '" + _billing_city + "', '" +
                         _billing_state + "', '" + _billing_postcode + "', '" + _shipping_first_name + "', '" + _shipping_last_name + "', '" + _shipping_address_1 + "', '" + _shipping_address_2 + "', '" +
-                        _shipping_city + "', '" + _shipping_state + "', '" + _shipping_postcode + "', " + order_total + ", " + order_tax + ", '" + paid_date + "', '"  + produto + "', " + ticketId + ");";
+                        _shipping_city + "', '" + _shipping_state + "', '" + _shipping_postcode + "', " + order_total + ", " + order_tax + ", '" + paid_date + "', '"  + produto + "', " + ticketId + ", '" + _billing_cpf + "');";
 
                 //log_(sql)
                 //log_(sqlOnline)
@@ -188,8 +190,8 @@ function createTicket(tickets, data){
 }
 
 function soldTicket(ticketId, produto, valor){
-    let msg = "Vendendo ingresso: " + ticketId + " Produto: " + produto
-    console.log()
+    let msg = "Vendendo ingresso: " + ticketId + " - Produto: " + produto
+    log_(msg)
 
     let user = 1
     let idCaixa = 1
@@ -233,7 +235,7 @@ function soldTicket(ticketId, produto, valor){
 }
 
 function updateTicketsSyncIds(id_order){    
-    
+
     let sql = "UPDATE wp_posts SET sync = 1 WHERE ID = " + id_order + ";"; 
     //log_(sql)
 
@@ -262,7 +264,10 @@ app.post('/getAllOrdersByName', function(req, res) {
     let start = req.body.start
     let end = req.body.end
 
-    let sql = "SELECT * FROM 3a_vendas_online WHERE _billing_first_name LIKE '%" + name + "%' \
+    let sql = "SELECT * \
+        FROM 3a_vendas_online \
+        WHERE _billing_first_name LIKE '%" + name + "%' \
+        OR _billing_cpf = '" + name + "' \
         AND datetime BETWEEN '" + start + "' AND '" + end + "';"
 
     log_(sql)
