@@ -6,6 +6,7 @@ let logger = require('morgan');
 let methodOverride = require('method-override')
 let cors = require('cors');
 let http = require('http').Server(app);
+var moment = require('moment');
 
 let synctime = 10000;
 
@@ -52,7 +53,9 @@ conLocal.connect(function(err) {
 });
 
 function log_(str){
-    console.log("[" + new Date() + "]", str)
+    let now = moment().format("DD/MM/YYYY hh:mm:ss")
+    let msg = "[" + now + "] " + str
+    console.log(msg)
 }
 
 function syncDatabases(){
