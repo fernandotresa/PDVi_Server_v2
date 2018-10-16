@@ -7,8 +7,10 @@ let methodOverride = require('method-override')
 let cors = require('cors');
 let http = require('http').Server(app);
 var moment = require('moment');
+var qr = require('qr-image');  
 
-let synctime = 10000;
+const synctime = 10000;
+const nodemailer = require('nodemailer');
 
 app.use(logger('dev'));
 app.use(bodyParser.json());
@@ -57,6 +59,73 @@ function log_(str){
     let msg = "[" + now + "] " + str
     console.log(msg)
 }
+
+var transporte = nodemailer.createTransport({
+    service: 'Gmail', 
+    auth: {
+      user: 'myrestaurantwebapp', 
+      pass: ''
+    } 
+});
+
+function sendEmail(files){
+    
+    let array = []        
+
+    files.forEach(file => {
+        let filename_ = file + '.png'
+        let path_ = './qrcodes/' + filename_
+        array.push({filename: filename_, path: path_})
+    });
+
+    console.log(array)
+ 
+    var email = {
+        from: 'myrestaurantwebapp@gmail.com', 
+        to: 'shaamangra@gmail.com', 
+        subject: 'Qr Code ingresso', 
+        html: 'Olá! Obrigado por adquirir o ingresso. Segue em anexo o qrcode. <strong>https://www.megaticket.com.br</strong>' ,
+        attachments: array
+    };
+
+    transporte.sendMail(email, function(err, info){
+        if(err)
+            throw err;
+    
+        console.log('Email enviado! Leia as informações adicionais: ', info);
+    });
+}
+
+function coord2offset(x, y, size) {
+    return (size + 1) * y + x + 1;
+}
+
+function customize(bitmap) {
+    const size = bitmap.size;
+    const data = bitmap.data;
+
+    for (let x = 0; x < size; x++) {
+        for (let y = 0; y < x; y++) {
+            const offset = coord2offset(x, y, size);
+            if (data[offset]) {
+                data[offset] = 255 - Math.abs(x - y);
+            }
+        }
+    }
+}
+
+function generateQrCode(ticket){
+
+    let file = './qrcodes/' + ticket + '.png'
+    
+    return qr.image(ticket, {
+        type: 'png',
+        customize
+    }).pipe(
+        require('fs').createWriteStream(file)
+    );
+}
+
 
 function syncDatabases(){
 	log_("Verificando novas vendas")
@@ -121,6 +190,7 @@ function syncDatabaseContinue(data){
 function createTicket(tickets, data){
     
     let order_id = 0;
+    let qrcodesTickets = []
 
     for (var j = 0; j < tickets.length; j++) {        
 
@@ -153,7 +223,7 @@ function createTicket(tickets, data){
             let _shipping_postcode = data[i]._shipping_postcode
             let order_total = data[i].order_total
             let order_tax = data[i].order_tax
-            let paid_date = data[i].paid_date
+            let paid_date = data[i].paid_date            
             
             for (var k = 0; k < arr.length; k++) {
 
@@ -183,13 +253,21 @@ function createTicket(tickets, data){
 
                     soldTicket(ticketId, produto, order_total)   
 
+                    generateQrCode(ticketId)
+
+                    qrcodesTickets.push(ticketId)
+                    
                     conLocal.query(sqlOnline, function (err2, result2) {  
                         if (err2) throw err2;                          
                     });
                 });                
-            }                                                
+            }                  
         }
-    }     
+    }
+    
+    setTimeout(function(){ 
+        sendEmail(qrcodesTickets)
+    }, 3000);
 }
 
 function soldTicket(ticketId, produto, valor){
@@ -280,6 +358,5 @@ app.post('/getAllOrdersByName', function(req, res) {
         res.json({"success": result});  
     });
 });
-
 
 http.listen(8085);
