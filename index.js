@@ -75,7 +75,7 @@ var transporte = nodemailer.createTransport({
 });
 
 function printFile(idTIcket){
-    let cmd = 'sh impressao.sh ' + idTIcket    
+    let cmd = 'sh scripts/impressao.sh ' + idTIcket    
 
     shell.exec(cmd, function(code, stdout, stderr) {
         console.log('Exit code:', code);
