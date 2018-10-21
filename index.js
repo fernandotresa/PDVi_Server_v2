@@ -8,9 +8,15 @@ let cors = require('cors');
 let http = require('http').Server(app);
 var moment = require('moment');
 var qr = require('qr-image');  
+let shell = require('shelljs');
 
 const synctime = 10000;
+
 const nodemailer = require('nodemailer');
+var msgEmail = 'Olá! Obrigado por adquirir o ingresso. Segue em anexo o qrcode. <strong>https://www.megaticket.com.br</strong>'
+var emailFrom = 'myrestaurantwebapp@gmail.com'
+var emailSubject = 'Qr Code ingresso'
+var pathQRCode = './qrcodes/'
 
 app.use(logger('dev'));
 app.use(bodyParser.json());
@@ -64,11 +70,21 @@ var transporte = nodemailer.createTransport({
     service: 'Gmail', 
     auth: {
       user: 'myrestaurantwebapp', 
-      pass: ''
+      pass: '123edcdiego'
     } 
 });
 
-function sendEmail(files){
+function printFile(idTIcket){
+    let cmd = 'sh impressao.sh ' + idTIcket    
+
+    shell.exec(cmd, function(code, stdout, stderr) {
+        console.log('Exit code:', code);
+        console.log('Program output:', stdout);
+        console.log('Program stderr:', stderr);
+    }); 
+}
+
+function sendEmail(files, email){
     
     let array = []        
 
@@ -77,21 +93,18 @@ function sendEmail(files){
         let path_ = './qrcodes/' + filename_
         array.push({filename: filename_, path: path_})
     });
-
-    console.log(array)
  
-    var email = {
-        from: 'myrestaurantwebapp@gmail.com', 
-        to: 'shaamangra@gmail.com', 
-        subject: 'Qr Code ingresso', 
-        html: 'Olá! Obrigado por adquirir o ingresso. Segue em anexo o qrcode. <strong>https://www.megaticket.com.br</strong>' ,
+    let email = {
+        from: emailFrom, 
+        to: emailAddr, 
+        subject: emailSubject, 
+        html:  msgEmail,
         attachments: array
     };
 
     transporte.sendMail(email, function(err, info){
         if(err)
-            throw err;
-    
+            throw err;    
         console.log('Email enviado! Leia as informações adicionais: ', info);
     });
 }
@@ -116,7 +129,7 @@ function customize(bitmap) {
 
 function generateQrCode(ticket){
 
-    let file = './qrcodes/' + ticket + '.png'
+    let file = pathQRCode + ticket + '.png'
     
     return qr.image(ticket, {
         type: 'png',
@@ -128,7 +141,7 @@ function generateQrCode(ticket){
 
 
 function syncDatabases(){
-	log_("Verificando novas vendas")
+	//log_("Verificando novas vendas")
 	
     let sql = "select \
         p.ID as order_id,\
@@ -190,6 +203,7 @@ function syncDatabaseContinue(data){
 function createTicket(tickets, data){
     
     let order_id = 0;
+    let billing_email;
     let qrcodesTickets = []
 
     for (var j = 0; j < tickets.length; j++) {        
@@ -205,7 +219,7 @@ function createTicket(tickets, data){
             let order_items = data[i].order_items
             var arr = order_items.toString().split("|");            
             let post_date = data[i].post_date
-            let billing_email = data[i].billing_email
+            billing_email = data[i].billing_email
             let _billing_first_name = data[i]._billing_first_name
             let _billing_last_name = data[i]._billing_last_name
             let _billing_address_1 = data[i]._billing_address_1
@@ -266,7 +280,7 @@ function createTicket(tickets, data){
     }
     
     setTimeout(function(){ 
-        sendEmail(qrcodesTickets)
+        sendEmail(qrcodesTickets, billing_email)
     }, 3000);
 }
 
@@ -348,7 +362,6 @@ app.post('/getAllOrdersByName', function(req, res) {
     let sql = "SELECT * \
         FROM 3a_vendas_online \
         WHERE _billing_first_name LIKE '%" + name + "%' \
-        OR _billing_cpf = '" + name + "' \
         AND datetime BETWEEN '" + start + "' AND '" + end + "';"
 
     log_(sql)
@@ -357,6 +370,60 @@ app.post('/getAllOrdersByName', function(req, res) {
         if (err1) throw err1;                          
         res.json({"success": result});  
     });
+});
+
+app.post('/getAllOrdersByCPF', function(req, res) {
+
+    let name = req.body.name
+    let start = req.body.start
+    let end = req.body.end
+
+    let sql = "SELECT * \
+        FROM 3a_vendas_online \
+        WHERE _billing_cpf = '" + name + "' \
+        AND datetime BETWEEN '" + start + "' AND '" + end + "';"
+
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {  
+        if (err1) throw err1;                          
+        res.json({"success": result});  
+    });
+});
+
+app.post('/sendEmail', function(req, res) {    
+
+    let idTicket = req.body.idTicket
+    let filename_ = idTicket + '.png'
+    let path_ = './qrcodes/' + filename_
+    
+    generateQrCode(idTicket)
+
+    let emailAddr = req.body.email
+
+    let email = {
+        from: emailFrom, 
+        to: emailAddr, 
+        subject: emailSubject, 
+        html:  msgEmail,
+        attachments: {filename: filename_, path: path_}
+    };
+
+    transporte.sendMail(email, function(err, info){
+        if(err)
+            throw err;    
+
+        console.log('Email enviado! Leia as informações adicionais: ', info);
+        res.json({"success": "true"});
+    });
+
+    
+});
+
+app.post('/printTicket', function(req, res) {    
+    let idTicket = req.body.idTicket    
+    printFile(idTicket)
+    res.json({"success": "true"});  
 });
 
 http.listen(8085);
