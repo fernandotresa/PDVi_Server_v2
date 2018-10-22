@@ -23,42 +23,106 @@ app.use(bodyParser.json());
 app.use(methodOverride());
 app.use(cors());
 
-let con = mysql.createConnection({
+var db_config_remote = {
     host: "venda-online.cacasorqzf2r.sa-east-1.rds.amazonaws.com",
     user: "bilheteria",
     password: "c4d3Oc0ntr4t0",
     database: "vendas_online"
- });
+};
 
- /*let conLocal = mysql.createConnection({
-    host: "10.0.2.180",
-    user: "3access",
-    password: "3access",
-    database: "zoosp"
- });*/
-
- let conLocal = mysql.createConnection({
+var db_config_local = {
     host: "localhost",
     user: "root",
     password: "senhaRoot",
     database: "3a_access"
- });
+};
 
- con.connect(function(err) {
-    if (err) throw err;
-	log_("Database woocommerce conectado!")		    
+let con;
+let conLocal;
+
+function handleDisconnectRemote() {
+
+    con = mysql.createConnection(db_config_remote);
+   
+    con.connect(function(err) {
+       if (err){
+        setTimeout(handleDisconnectRemote, 2000);
+       }
+
+       con.on('error', function(err) {
+
+        if(err.code === 'PROTOCOL_CONNECTION_LOST') {
+            handleDisconnectRemote();  
+
+        } else 
+            throw err;  
+        
+    });
+
+    log_("Database conectado!")		    
     log_("Aguardando conexões ...")	
+   });
+}
+
+function handleDisconnectRemote() {
+
+    con = mysql.createConnection(db_config_remote);
+   
+    con.connect(function(err) {
+       if (err){
+        setTimeout(handleDisconnectRemote, 2000);
+       }
+
+       con.on('error', function(err) {
+
+        if(err.code === 'PROTOCOL_CONNECTION_LOST') {
+            handleDisconnectRemote();  
+
+        } else 
+            throw err;  
+        
+    });
+
+    log_("Database remoto conectado!")		    
+    log_("Aguardando conexões ...")	
+   });
+}
+
+function handleDisconnectLocal() {
+
+    conLocal = mysql.createConnection(db_config_local);
+   
+    con.connect(function(err) {
+       if (err){
+        setTimeout(handleDisconnectLocal, 2000);
+       }
+
+       conLocal.on('error', function(err) {
+
+        if(err.code === 'PROTOCOL_CONNECTION_LOST')
+            handleDisconnectLocal();  
+        else 
+            throw err;  
+        
+    });
+
+    log_("Database local conectado!")		    
+    log_("Aguardando conexões ...")	
+   });
+}
+
+function startInterface(){
+
+    handleDisconnectRemote();
+    handleDisconnectLocal();
+
+    setInterval(function(){ 
+        syncDatabases()
+     }, synctime);
     
-	 setInterval(function(){ 
-		syncDatabases()
-	 }, synctime);
-});
+}
 
-conLocal.connect(function(err) {
-    if (err) throw err;
-	log_("Database local conectado!")		    
-    log_("Aguardando conexões ...")	
-});
+startInterface();
 
 function log_(str){
     let now = moment().format("DD/MM/YYYY hh:mm:ss")
