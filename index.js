@@ -92,7 +92,7 @@ function handleDisconnectLocal() {
 
     conLocal = mysql.createConnection(db_config_local);
    
-    con.connect(function(err) {
+    conLocal.connect(function(err) {
        if (err){
         setTimeout(handleDisconnectLocal, 2000);
        }
