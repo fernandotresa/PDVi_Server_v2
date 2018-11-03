@@ -30,11 +30,18 @@ var db_config_remote = {
     database: "vendas_online"
 };
 
-var db_config_local = {
+/*var db_config_local = {
     host: "localhost",
     user: "root",
     password: "senhaRoot",
     database: "3a_access"
+};*/
+
+var db_config_local = {
+    host: "10.0.2.180",
+    user: "root",
+    password: "Mudaragora00",
+    database: "3access"
 };
 
 let con;
@@ -148,7 +155,7 @@ function printFile(idTIcket){
     }); 
 }
 
-function sendEmail(files, email){
+function sendEmail(files, emailAddr){
     
     let array = []        
 
@@ -158,7 +165,7 @@ function sendEmail(files, email){
         array.push({filename: filename_, path: path_})
     });
  
-    let email = {
+    let emailRecipe = {
         from: emailFrom, 
         to: emailAddr, 
         subject: emailSubject, 
@@ -166,7 +173,7 @@ function sendEmail(files, email){
         attachments: array
     };
 
-    transporte.sendMail(email, function(err, info){
+    transporte.sendMail(emailRecipe, function(err, info){
         if(err)
             throw err;    
         console.log('Email enviado! Leia as informações adicionais: ', info);
