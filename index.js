@@ -30,19 +30,19 @@ var db_config_remote = {
     database: "vendas_online"
 };
 
-/*var db_config_local = {
+var db_config_local = {
     host: "localhost",
     user: "root",
     password: "senhaRoot",
     database: "3a_access"
-};*/
+};
 
-var db_config_local = {
+/*var db_config_local = {
     host: "10.0.2.180",
     user: "root",
     password: "Mudaragora00",
     database: "3access"
-};
+};*/
 
 let con;
 let conLocal;
@@ -496,5 +496,43 @@ app.post('/printTicket', function(req, res) {
     printFile(idTicket)
     res.json({"success": "true"});  
 });
+
+app.post('/getAreas', function(req, res) {
+
+    let idTotem = req.body.id
+
+    log_('Totem: '+ idTotem + ' - Verificando informações da areas: ')
+            
+    let sql = "SELECT 3a_area_acesso.* FROM 3a_area_acesso;";
+
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });
+});
+
+app.post('/getProductsArea', function(req, res) {
+
+    let idTotem = req.body.id
+    let idArea = req.body.idArea
+
+    log_('Totem: '+ idTotem + ' - Verificando produtos da areas: ' + idArea)
+            
+    let sql = "SELECT 3a_produto.*, 0 AS quantity \
+        FROM 3a_produto \
+        INNER join 3a_subtipo_produto ON 3a_subtipo_produto.id_subtipo_produto = 3a_produto.fk_id_subtipo_produto \
+        INNER join 3a_subtipo_area_autorizada ON 3a_subtipo_area_autorizada.fk_id_subtipo = 3a_subtipo_produto.id_subtipo_produto \
+        WHERE 3a_subtipo_area_autorizada.fk_id_area_acesso = " + idArea + ";";
+
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });
+});
+
 
 http.listen(8085);
