@@ -210,7 +210,6 @@ function generateQrCode(ticket){
     );
 }
 
-
 function syncDatabases(){
 	//log_("Verificando novas vendas")
 	
@@ -410,6 +409,38 @@ function updateTicketsSyncIds(id_order){
     });    
 }
 
+function payProduct(idPayment, products){
+
+    let sql = "SELECT id_estoque_utilizavel FROM 3a_estoque_utilizavel ORDER BY id_estoque_utilizavel DESC LIMIT 1";
+    //log_(sql)
+
+    conLocal.query(sql, function (err1, result) {  
+        if (err1) throw err1;   
+
+        let id_estoque_utilizavel = result[0].id_estoque_utilizavel
+        payProductContinue(idPayment, products, id_estoque_utilizavel)
+    });        
+}
+
+function payProductContinue(idPayment, products, id_estoque_utilizavel){            
+
+    for (var i = 0, len = products.length; i < len; i++) {
+        let product = products[i].nome_produto
+        let last = ++id_estoque_utilizavel
+
+        let sql = "INSERT INTO 3a_estoque_utilizavel (id_estoque_utilizavel,fk_id_produto,fk_id_tipo_estoque,fk_id_usuarios_inclusao,data_inclusao_utilizavel, impresso) \
+            VALUES(" + last + ",\
+            (SELECT id_produto FROM 3a_produto WHERE nome_produto = '" + product + "' ORDER BY id_produto DESC LIMIT 1 ),\
+            1,1,NOW(), 1);" 
+
+        //log_(sql)
+
+        conLocal.query(sql, function (err1, result) {  
+            if (err1) throw err1;                          
+        });
+      }    
+}
+
 app.post('/getAllOrders', function(req, res) {    
 
     let start = req.body.start
@@ -486,9 +517,7 @@ app.post('/sendEmail', function(req, res) {
 
         console.log('Email enviado! Leia as informações adicionais: ', info);
         res.json({"success": "true"});
-    });
-
-    
+    });    
 });
 
 app.post('/printTicket', function(req, res) {    
@@ -503,9 +532,24 @@ app.post('/getAreas', function(req, res) {
 
     log_('Totem: '+ idTotem + ' - Verificando informações da areas: ')
             
-    let sql = "SELECT 3a_area_acesso.* FROM 3a_area_acesso;";
+    let sql = "SELECT 3a_area_venda.* FROM 3a_area_venda;";
+    //log_(sql)
 
-    log_(sql)
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });
+});
+
+app.post('/getAreasByName', function(req, res) {
+
+    let idTotem = req.body.id
+    let name = req.body.name
+
+    log_('Totem: '+ idTotem + ' - Verificando informações da areas por nome: ' + name)
+            
+    let sql = "SELECT 3a_area_venda.* FROM 3a_area_venda WHERE nome_area_venda = '" + name + "';";
+    //log_(sql)
 
     conLocal.query(sql, function (err1, result) {        
         if (err1) throw err1;           
@@ -520,18 +564,26 @@ app.post('/getProductsArea', function(req, res) {
 
     log_('Totem: '+ idTotem + ' - Verificando produtos da areas: ' + idArea)
             
-    let sql = "SELECT 3a_produto.*, 0 AS quantity \
+    let sql = "SELECT 3a_produto.*, 0 AS quantity, 0.00 AS valor_total \
         FROM 3a_produto \
-        INNER join 3a_subtipo_produto ON 3a_subtipo_produto.id_subtipo_produto = 3a_produto.fk_id_subtipo_produto \
-        INNER join 3a_subtipo_area_autorizada ON 3a_subtipo_area_autorizada.fk_id_subtipo = 3a_subtipo_produto.id_subtipo_produto \
-        WHERE 3a_subtipo_area_autorizada.fk_id_area_acesso = " + idArea + ";";
+        INNER JOIN 3a_area_venda_produtos ON 3a_area_venda_produtos.fk_id_produto = 3a_produto.id_produto \
+        WHERE 3a_area_venda_produtos.fk_id_area_venda = " + idArea + ";";
 
-    log_(sql)
+    //log_(sql)
 
     conLocal.query(sql, function (err1, result) {        
         if (err1) throw err1;           
         res.json({"success": result}); 
     });
+});
+
+app.post('/payProducts', function(req, res) {
+
+    let idPayment = req.body.idPayment
+    let products = req.body.products
+
+    payProduct(idPayment, products)
+    res.json({"success": 1});  
 });
 
 
