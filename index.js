@@ -425,7 +425,9 @@ function payProduct(idPayment, products){
 function payProductContinue(idPayment, products, id_estoque_utilizavel){            
 
     for (var i = 0, len = products.length; i < len; i++) {
+        
         let product = products[i].nome_produto
+        let valor_produto = products[i].valor_produto
         let last = ++id_estoque_utilizavel
 
         let sql = "INSERT INTO 3a_estoque_utilizavel (id_estoque_utilizavel,fk_id_produto,fk_id_tipo_estoque,fk_id_usuarios_inclusao,data_inclusao_utilizavel, impresso) \
@@ -433,10 +435,12 @@ function payProductContinue(idPayment, products, id_estoque_utilizavel){
             (SELECT id_produto FROM 3a_produto WHERE nome_produto = '" + product + "' ORDER BY id_produto DESC LIMIT 1 ),\
             1,1,NOW(), 1);" 
 
-        //log_(sql)
+        log_(sql)        
 
         conLocal.query(sql, function (err1, result) {  
-            if (err1) throw err1;                          
+            if (err1) throw err1;                      
+            
+            soldTicket(last, product, valor_produto)
         });
       }    
 }
@@ -548,7 +552,7 @@ app.post('/getAreasByName', function(req, res) {
 
     log_('Totem: '+ idTotem + ' - Verificando informações da areas por nome: ' + name)
             
-    let sql = "SELECT 3a_area_venda.* FROM 3a_area_venda WHERE nome_area_venda = '" + name + "';";
+    let sql = "SELECT 3a_area_venda.* FROM 3a_area_venda WHERE nome_area_venda LIKE '%" + name + "%';";
     //log_(sql)
 
     conLocal.query(sql, function (err1, result) {        
@@ -568,6 +572,27 @@ app.post('/getProductsArea', function(req, res) {
         FROM 3a_produto \
         INNER JOIN 3a_area_venda_produtos ON 3a_area_venda_produtos.fk_id_produto = 3a_produto.id_produto \
         WHERE 3a_area_venda_produtos.fk_id_area_venda = " + idArea + ";";
+
+    //log_(sql)
+
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });
+});
+
+app.post('/getProductsAreaByName', function(req, res) {
+
+    let idTotem = req.body.id
+    let idArea = req.body.idArea
+    let name = req.body.name
+
+    log_('Totem: '+ idTotem + ' - Verificando produtos da areas: ' + idArea)
+            
+    let sql = "SELECT 3a_produto.*, 0 AS quantity, 0.00 AS valor_total \
+        FROM 3a_produto \
+        INNER JOIN 3a_area_venda_produtos ON 3a_area_venda_produtos.fk_id_produto = 3a_produto.id_produto \
+        WHERE 3a_area_venda_produtos.fk_id_area_venda = " + idArea + " AND 3a_produto.nome_produto LIKE '%" + name + "%';";
 
     //log_(sql)
 
