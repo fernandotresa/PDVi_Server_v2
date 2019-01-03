@@ -568,8 +568,12 @@ app.post('/getProductsArea', function(req, res) {
 
     log_('Totem: '+ idTotem + ' - Verificando produtos da areas: ' + idArea)
             
-    let sql = "SELECT 3a_produto.*, 0 AS quantity, 0.00 AS valor_total \
+    let sql = "SELECT 3a_produto.*, \
+        0 AS quantity, \
+        3a_subtipo_produto.nome_subtipo_produto,\
+        0.00 AS valor_total \
         FROM 3a_produto \
+        INNER JOIN 3a_subtipo_produto ON 3a_subtipo_produto.id_subtipo_produto = 3a_produto.fk_id_subtipo_produto \
         INNER JOIN 3a_area_venda_produtos ON 3a_area_venda_produtos.fk_id_produto = 3a_produto.id_produto \
         WHERE 3a_area_venda_produtos.fk_id_area_venda = " + idArea + " \
         ORDER BY 3a_produto.posicao_produto_imprimivel ASC;";
@@ -596,6 +600,23 @@ app.post('/getProductsAreaByName', function(req, res) {
         WHERE 3a_area_venda_produtos.fk_id_area_venda = " + idArea + " \
         AND 3a_produto.nome_produto LIKE '%" + name + "%' \
         ORDER BY 3a_produto.posicao_produto_imprimivel ASC;";
+
+    //log_(sql)
+
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });
+});
+
+app.post('/getSubtypesProducts', function(req, res) {
+
+    let idTotem = req.body.id
+    let idProduct = req.body.idProduct
+
+    log_('Totem: '+ idTotem + ' - Verificando subtipos do produto: ' + idProduct)
+            
+    let sql = "SELECT * FROM zoosp.3a_subtipo_produto where fk_id_tipo_produto = " + idProduct + ";";
 
     //log_(sql)
 
