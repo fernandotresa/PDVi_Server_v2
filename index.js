@@ -31,10 +31,10 @@ var db_config_remote = {
 };
 
 var db_config_local = {
-    host: "localhost",
+    host: "10.8.0.50",
     user: "root",
-    password: "senhaRoot",
-    database: "3a_access"
+    password: "Mudaragora00",
+    database: "zoosp"
 };
 
 /*var db_config_local = {
@@ -571,7 +571,8 @@ app.post('/getProductsArea', function(req, res) {
     let sql = "SELECT 3a_produto.*, 0 AS quantity, 0.00 AS valor_total \
         FROM 3a_produto \
         INNER JOIN 3a_area_venda_produtos ON 3a_area_venda_produtos.fk_id_produto = 3a_produto.id_produto \
-        WHERE 3a_area_venda_produtos.fk_id_area_venda = " + idArea + ";";
+        WHERE 3a_area_venda_produtos.fk_id_area_venda = " + idArea + " \
+        ORDER BY 3a_produto.posicao_produto_imprimivel ASC;";
 
     //log_(sql)
 
@@ -592,7 +593,9 @@ app.post('/getProductsAreaByName', function(req, res) {
     let sql = "SELECT 3a_produto.*, 0 AS quantity, 0.00 AS valor_total \
         FROM 3a_produto \
         INNER JOIN 3a_area_venda_produtos ON 3a_area_venda_produtos.fk_id_produto = 3a_produto.id_produto \
-        WHERE 3a_area_venda_produtos.fk_id_area_venda = " + idArea + " AND 3a_produto.nome_produto LIKE '%" + name + "%';";
+        WHERE 3a_area_venda_produtos.fk_id_area_venda = " + idArea + " \
+        AND 3a_produto.nome_produto LIKE '%" + name + "%' \
+        ORDER BY 3a_produto.posicao_produto_imprimivel ASC;";
 
     //log_(sql)
 
