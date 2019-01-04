@@ -442,18 +442,24 @@ function payProductContinue(idPayment, products, data, userId){
     for (var i = 0; i < products.length; i++){
         
         let product = products[i]
-        let id_produto = product.id_produto
-        let last = ++id_estoque_utilizavel
-    
-        let sql = "INSERT INTO 3a_estoque_utilizavel (id_estoque_utilizavel,fk_id_produto,fk_id_tipo_estoque,fk_id_usuarios_inclusao,data_inclusao_utilizavel, impresso) \
+        console.log(product)
+        let id_produto = product.id_produto        
+        let quantity = product.quantity
+
+        for(var j = 0; j < quantity; j++){
+            
+            let last = ++id_estoque_utilizavel
+            
+            let sql = "INSERT INTO 3a_estoque_utilizavel (id_estoque_utilizavel,fk_id_produto,fk_id_tipo_estoque,fk_id_usuarios_inclusao,data_inclusao_utilizavel, impresso) \
             VALUES(" + last + ", " + id_produto + ", 1,1,NOW(), 1);" 
     
-        log_(sql)        
-    
-        conLocal.query(sql, function (err1, result) {  
-            if (err1) throw err1;                                  
-            soldTicket(product, idPayment, last, userId)
-        });
+            log_(sql)        
+        
+            conLocal.query(sql, function (err1, result) {  
+                if (err1) throw err1;                                  
+                soldTicket(product, idPayment, last, userId)
+            });
+        }            
     }        
 }
 
