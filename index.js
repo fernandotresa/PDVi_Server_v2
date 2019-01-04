@@ -335,7 +335,7 @@ function createTicket(tickets, data){
                 conLocal.query(sql, function (err1, result) {  
                     if (err1) throw err1;                                                               
 
-                    soldTicket(ticketId, produto, order_total)   
+                    soldTicket(ticketId, produto, order_total, 1)   
 
                     generateQrCode(ticketId)
 
@@ -354,16 +354,19 @@ function createTicket(tickets, data){
     }, 3000);
 }
 
-function soldTicket(ticketId, produto, valor){
-    let msg = "Vendendo ingresso: " + ticketId + " - Produto: " + produto
+function soldTicket(produto, tipoPagamento, last, userId){
+    let msg = "Vendendo ingresso: " + last + " - Produto: " + produto.id_produto
     log_(msg)
 
-    let user = 1
+    let user = userId
     let idCaixa = 1
-    let obs = "Pagamento Online"
+    let obs = ""
     let ip = "localhost"
-    let tipoPagamento = 1
     let validade = 1
+    let id_estoque_utilizavel = last
+    let fk_id_subtipo_produto = produto.fk_id_subtipo_produto
+    let valor = produto.valor_produto
+    let id_produto = produto.id_produto
 
     let sql = "INSERT INTO 3a_log_vendas (\
         fk_id_estoque_utilizavel,\
@@ -379,20 +382,20 @@ function soldTicket(ticketId, produto, valor){
         fk_id_tipo_pagamento,\
         fk_id_validade) \
     VALUES("
-     + ticketId + "," 
-     + user + ", \
-     (SELECT id_produto FROM 3a_produto WHERE nome_produto = '" + produto + "' ORDER BY id_produto DESC LIMIT 1 ),\
-     (SELECT fk_id_subtipo_produto FROM 3a_produto WHERE nome_produto = '" + produto + "' ORDER BY id_produto DESC LIMIT 1 ),"
+     + id_estoque_utilizavel + "," 
+     + user + ","
+     + id_produto + ","
+     + fk_id_subtipo_produto + ","
      + idCaixa + "," +
      + valor + "," +
      "NOW(), '" 
      + obs + "', '" 
      + ip + "'," 
-     + "'none',"
+     + "'PDVi',"
      + tipoPagamento + ","
      + validade + ");"
 
-    //log_(sql)
+    log_(sql)
 
     conLocal.query(sql, function (err2, result2) {  
         if (err2) throw err2;                                             
@@ -409,40 +412,49 @@ function updateTicketsSyncIds(id_order){
     });    
 }
 
-function payProduct(idPayment, products){
-
-    let sql = "SELECT id_estoque_utilizavel FROM 3a_estoque_utilizavel ORDER BY id_estoque_utilizavel DESC LIMIT 1";
-    //log_(sql)
-
-    conLocal.query(sql, function (err1, result) {  
-        if (err1) throw err1;   
-
-        let id_estoque_utilizavel = result[0].id_estoque_utilizavel
-        payProductContinue(idPayment, products, id_estoque_utilizavel)
-    });        
-}
-
-function payProductContinue(idPayment, products, id_estoque_utilizavel){            
+function payProduct(idPayment, products, idUser){
 
     for (var i = 0, len = products.length; i < len; i++) {
         
-        let product = products[i].nome_produto
-        let valor_produto = products[i].valor_produto
-        let last = ++id_estoque_utilizavel
-
-        let sql = "INSERT INTO 3a_estoque_utilizavel (id_estoque_utilizavel,fk_id_produto,fk_id_tipo_estoque,fk_id_usuarios_inclusao,data_inclusao_utilizavel, impresso) \
-            VALUES(" + last + ",\
-            (SELECT id_produto FROM 3a_produto WHERE nome_produto = '" + product + "' ORDER BY id_produto DESC LIMIT 1 ),\
-            1,1,NOW(), 1);" 
+        let prefixo = products[i].prefixo_produto
+        let prefixo_ini=prefixo*1000000;
+        let prefixo_fim=prefixo_ini+999999;
+        
+        let sql = "SELECT IFNULL(MAX(id_estoque_utilizavel), " + prefixo_ini + ") AS TOTAL \
+            FROM 3a_estoque_utilizavel \
+            WHERE id_estoque_utilizavel \
+            BETWEEN " + prefixo_ini + " \
+            AND " + prefixo_fim + ";"
 
         log_(sql)        
 
         conLocal.query(sql, function (err1, result) {  
-            if (err1) throw err1;                      
-            
-            soldTicket(last, product, valor_produto)
+            if (err1) throw err1;                                  
+            payProductContinue(idPayment, products, result, idUser)
         });
-      }    
+      }         
+}
+
+function payProductContinue(idPayment, products, data, userId){            
+
+    let id_estoque_utilizavel = data[0].TOTAL        
+
+    for (var i = 0; i < products.length; i++){
+        
+        let product = products[i]
+        let id_produto = product.id_produto
+        let last = ++id_estoque_utilizavel
+    
+        let sql = "INSERT INTO 3a_estoque_utilizavel (id_estoque_utilizavel,fk_id_produto,fk_id_tipo_estoque,fk_id_usuarios_inclusao,data_inclusao_utilizavel, impresso) \
+            VALUES(" + last + ", " + id_produto + ", 1,1,NOW(), 1);" 
+    
+        log_(sql)        
+    
+        conLocal.query(sql, function (err1, result) {  
+            if (err1) throw err1;                                  
+            soldTicket(product, idPayment, last, userId)
+        });
+    }        
 }
 
 app.post('/getAllOrders', function(req, res) {    
@@ -630,15 +642,16 @@ app.post('/payProducts', function(req, res) {
 
     let idPayment = req.body.idPayment
     let products = req.body.products
+    let idUser = req.body.userId
 
-    payProduct(idPayment, products)
+    payProduct(idPayment, products, idUser)
     res.json({"success": 1});  
 });
 
 app.post('/getAuth', function(req, res) {
 
     let idTotem = req.body.id
-    let email = req.body.idProduct
+    let email = req.body.email
     let password = req.body.password
 
     log_('Totem: '+ idTotem + ' - Verificando usuário: ' + email)
