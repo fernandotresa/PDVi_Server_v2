@@ -634,7 +634,7 @@ app.post('/getSubtypesProducts', function(req, res) {
 
     log_('Totem: '+ idTotem + ' - Verificando subtipos do produto: ' + idProduct)
             
-    let sql = "SELECT * FROM zoosp.3a_subtipo_produto where fk_id_tipo_produto = " + idProduct + ";";
+    let sql = "SELECT * FROM 3a_subtipo_produto where fk_id_tipo_produto = " + idProduct + ";";
 
     //log_(sql)
 
