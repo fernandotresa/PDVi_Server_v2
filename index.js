@@ -635,5 +635,24 @@ app.post('/payProducts', function(req, res) {
     res.json({"success": 1});  
 });
 
+app.post('/getAuth', function(req, res) {
+
+    let idTotem = req.body.id
+    let email = req.body.idProduct
+    let password = req.body.password
+
+    log_('Totem: '+ idTotem + ' - Verificando usuário: ' + email)
+            
+    let sql = "SELECT * FROM zoosp.3a_usuarios where login_usuarios = '" + email + "' \
+        AND senha_usuarios = '" + password + "';";
+
+    //log_(sql)
+
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });
+});
+
 
 http.listen(8085);
