@@ -355,7 +355,7 @@ function createTicket(tickets, data){
 }
 
 function soldTicket(produto, tipoPagamento, last, userId){
-        
+
     let user = userId
     let idCaixa = 1
     let obs = ""
@@ -390,7 +390,7 @@ function soldTicket(produto, tipoPagamento, last, userId){
      + obs + "', '" 
      + ip + "'," 
      + "'PDVi',"
-     + tipoPagamento + ","
+     + "(SELECT 3a_tipo_pagamento.id_tipo_pagamento FROM 3a_tipo_pagamento WHERE 3a_tipo_pagamento.nome_tipo_pagamento = '" + tipoPagamento + "'),"
      + validade + ");"
 
     log_(sql)
@@ -552,6 +552,21 @@ app.post('/getAreas', function(req, res) {
     log_('Totem: '+ idTotem + ' - Verificando informações da areas: ')
             
     let sql = "SELECT 3a_area_venda.* FROM 3a_area_venda;";
+    //log_(sql)
+
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });
+});
+
+app.post('/getPaymentsMethods', function(req, res) {
+
+    let idTotem = req.body.id
+
+    log_('Totem: '+ idTotem + ' - Verificando metodos de pagamento: ')
+            
+    let sql = "SELECT 3a_tipo_pagamento.* FROM 3a_tipo_pagamento;";
     //log_(sql)
 
     conLocal.query(sql, function (err1, result) {        
