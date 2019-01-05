@@ -355,9 +355,7 @@ function createTicket(tickets, data){
 }
 
 function soldTicket(produto, tipoPagamento, last, userId){
-    let msg = "Vendendo ingresso: " + last + " - Produto: " + produto.id_produto
-    log_(msg)
-
+        
     let user = userId
     let idCaixa = 1
     let obs = ""
@@ -412,10 +410,11 @@ function updateTicketsSyncIds(id_order){
     });    
 }
 
-function payProduct(idPayment, products, idUser){
+function payProduct(idPayment, products, idUser, res){
 
     for (var i = 0, len = products.length; i < len; i++) {
         
+        let product = products[i]
         let prefixo = products[i].prefixo_produto
         let prefixo_ini=prefixo*1000000;
         let prefixo_fim=prefixo_ini+999999;
@@ -424,43 +423,41 @@ function payProduct(idPayment, products, idUser){
             FROM 3a_estoque_utilizavel \
             WHERE id_estoque_utilizavel \
             BETWEEN " + prefixo_ini + " \
-            AND " + prefixo_fim + ";"
+            AND " + prefixo_fim + ";"        
 
-        log_(sql)        
+        log_(sql)    
 
         conLocal.query(sql, function (err1, result) {  
-            if (err1) throw err1;                                  
-            payProductContinue(idPayment, products, result, idUser)
+            if (err1) throw err1;    
+                                              
+            payProductContinue(idPayment, product, result, idUser)
         });
-      }         
+      }
+      
+      res.json({"success": 1});  
 }
 
-function payProductContinue(idPayment, products, data, userId){            
+function payProductContinue(idPayment, product, data, userId){            
 
     let id_estoque_utilizavel = data[0].TOTAL        
 
-    for (var i = 0; i < products.length; i++){
-        
-        let product = products[i]
-        console.log(product)
-        let id_produto = product.id_produto        
-        let quantity = product.quantity
+    let id_produto = product.id_produto        
+    let quantity = product.quantity
 
-        for(var j = 0; j < quantity; j++){
-            
-            let last = ++id_estoque_utilizavel
-            
-            let sql = "INSERT INTO 3a_estoque_utilizavel (id_estoque_utilizavel,fk_id_produto,fk_id_tipo_estoque,fk_id_usuarios_inclusao,data_inclusao_utilizavel, impresso) \
-            VALUES(" + last + ", " + id_produto + ", 1,1,NOW(), 1);" 
-    
-            log_(sql)        
+    for(var j = 0; j < quantity; j++){
         
-            conLocal.query(sql, function (err1, result) {  
-                if (err1) throw err1;                                  
-                soldTicket(product, idPayment, last, userId)
-            });
-        }            
-    }        
+        let last = ++id_estoque_utilizavel
+        
+        let sql = "INSERT INTO 3a_estoque_utilizavel (id_estoque_utilizavel,fk_id_produto,fk_id_tipo_estoque,fk_id_usuarios_inclusao,data_inclusao_utilizavel, impresso) \
+        VALUES(" + last + ", " + id_produto + ", 1,1,NOW(), 1);"                       
+
+        log_(sql)   
+    
+        conLocal.query(sql, function (err1, result) {  
+            if (err1) throw err1;                                             
+            soldTicket(product, idPayment, last, userId)
+        });    
+    }
 }
 
 app.post('/getAllOrders', function(req, res) {    
@@ -650,8 +647,7 @@ app.post('/payProducts', function(req, res) {
     let products = req.body.products
     let idUser = req.body.userId
 
-    payProduct(idPayment, products, idUser)
-    res.json({"success": 1});  
+    payProduct(idPayment, products, idUser, res)
 });
 
 app.post('/getAuth', function(req, res) {
