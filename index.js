@@ -417,7 +417,9 @@ function updateTicketsSyncIds(id_order){
     });    
 }
 
-function payProduct(idPayment, products, idUser, userName, res){
+function payProduct(req, res){
+
+    let products = req.body.products
 
     for (var i = 0, len = products.length; i < len; i++) {
         
@@ -437,22 +439,26 @@ function payProduct(idPayment, products, idUser, userName, res){
         conLocal.query(sql, function (err1, result) {  
             if (err1) throw err1;    
                                               
-            payProductContinue(idPayment, product, result, idUser, userName)
+            payProductContinue(req, product, result)
         });
       }
       
       res.json({"success": 1});  
 }
 
-function payProductContinue(idPayment, product, data, userId, userName){            
+function payProductContinue(req, product, data){            
 
     let id_estoque_utilizavel = data[0].TOTAL        
     console.log(product)
+    
+    let userId = req.body.userId
+    let userName = req.body.userName
+    let finalValue = req.body.finalValue
+    let idPayment = req.body.idPayment
 
     let id_produto = product.id_produto        
     let nome_produto = product.nome_produto        
     let valor_produto = product.valor_produto        
-    let valor_total = product.valor_total        
 
     let quantity = product.quantity
 
@@ -472,7 +478,7 @@ function payProductContinue(idPayment, product, data, userId, userName){
 
             let now = moment().format("DD.MM.YYYY")
 
-            printFile(nome_produto, valor_produto, userName, now, last, valor_total)
+            printFile(nome_produto, valor_produto, userName, now, last, finalValue)
         });    
     }
 }
@@ -673,14 +679,8 @@ app.post('/getSubtypesProducts', function(req, res) {
     });
 });
 
-app.post('/payProducts', function(req, res) {
-
-    let idPayment = req.body.idPayment
-    let products = req.body.products
-    let idUser = req.body.userId
-    let userName = req.body.userName
-
-    payProduct(idPayment, products, idUser, userName, res)
+app.post('/payProducts', function(req, res) {    
+    payProduct(req, res)
 });
 
 app.post('/getAuth', function(req, res) {
