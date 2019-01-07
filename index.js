@@ -145,12 +145,13 @@ var transporte = nodemailer.createTransport({
     } 
 });
 
-function printFile(tipoIngresso, valorIngresso, operador, dataHora, idTIcket, totalVenda){
+
+function printFile(tipoIngresso, valorIngresso, operador, dataHora, idTicket, totalVenda){
     
     console.log("Realizando impressão do ingresso ", idTicket)
     
     let cmd = 'sh scripts/impressao.sh ' + tipoIngresso + ' ' + valorIngresso + ' ' + operador + ' ' 
-                + dataHora + ' ' + idTIcket + ' ' + totalVenda
+                + dataHora + ' ' + idTicket + ' ' + totalVenda
 
     console.log(cmd)
 
