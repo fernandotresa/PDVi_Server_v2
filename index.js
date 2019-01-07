@@ -470,7 +470,7 @@ function payProductContinue(idPayment, product, data, userId, userName){
 
             soldTicket(product, idPayment, last, userId)
 
-            let now = moment().format("DD/MM/YYYY")
+            let now = moment().format("DD.MM.YYYY")
 
             printFile(nome_produto, valor_produto, userName, now, last, valor_total)
         });    
