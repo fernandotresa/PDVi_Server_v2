@@ -416,7 +416,7 @@ function updateTicketsSyncIds(id_order){
     });    
 }
 
-function payProduct(idPayment, products, idUser, res){
+function payProduct(idPayment, products, idUser, userName, res){
 
     for (var i = 0, len = products.length; i < len; i++) {
         
@@ -436,19 +436,23 @@ function payProduct(idPayment, products, idUser, res){
         conLocal.query(sql, function (err1, result) {  
             if (err1) throw err1;    
                                               
-            payProductContinue(idPayment, product, result, idUser)
+            payProductContinue(idPayment, product, result, idUser, userName)
         });
       }
       
       res.json({"success": 1});  
 }
 
-function payProductContinue(idPayment, product, data, userId){            
+function payProductContinue(idPayment, product, data, userId, userName){            
 
     let id_estoque_utilizavel = data[0].TOTAL        
     console.log(product)
 
     let id_produto = product.id_produto        
+    let nome_produto = product.nome_produto        
+    let valor_produto = product.valor_produto        
+    let valor_total = product.valor_total        
+
     let quantity = product.quantity
 
     for(var j = 0; j < quantity; j++){
@@ -464,7 +468,10 @@ function payProductContinue(idPayment, product, data, userId){
             if (err1) throw err1;  
 
             soldTicket(product, idPayment, last, userId)
-            printFile(last)
+
+            let now = moment().format("DD/MM/YYYY")
+
+            printFile(nome_produto, valor_produto, userName, now, last, valor_total)
         });    
     }
 }
@@ -670,8 +677,9 @@ app.post('/payProducts', function(req, res) {
     let idPayment = req.body.idPayment
     let products = req.body.products
     let idUser = req.body.userId
+    let userName = req.body.userName
 
-    payProduct(idPayment, products, idUser, res)
+    payProduct(idPayment, products, idUser, userName, res)
 });
 
 app.post('/getAuth', function(req, res) {
