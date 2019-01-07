@@ -145,8 +145,14 @@ var transporte = nodemailer.createTransport({
     } 
 });
 
-function printFile(idTIcket){
-    let cmd = 'sh scripts/impressao.sh ' + idTIcket    
+function printFile(tipoIngresso, valorIngresso, operador, dataHora, idTIcket, totalVenda){
+    
+    console.log("Realizando impressão do ingresso ", idTicket)
+    
+    let cmd = 'sh scripts/impressao.sh ' + tipoIngresso + ' ' + valorIngresso + ' ' + operador + ' ' 
+                + dataHora + ' ' + idTIcket + ' ' + totalVenda
+
+    console.log(cmd)
 
     shell.exec(cmd, function(code, stdout, stderr) {
         console.log('Exit code:', code);
@@ -440,6 +446,7 @@ function payProduct(idPayment, products, idUser, res){
 function payProductContinue(idPayment, product, data, userId){            
 
     let id_estoque_utilizavel = data[0].TOTAL        
+    console.log(product)
 
     let id_produto = product.id_produto        
     let quantity = product.quantity
