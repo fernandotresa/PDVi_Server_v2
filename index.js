@@ -454,8 +454,10 @@ function payProductContinue(idPayment, product, data, userId){
         log_(sql)   
     
         conLocal.query(sql, function (err1, result) {  
-            if (err1) throw err1;                                             
+            if (err1) throw err1;  
+
             soldTicket(product, idPayment, last, userId)
+            printFile(last)
         });    
     }
 }
