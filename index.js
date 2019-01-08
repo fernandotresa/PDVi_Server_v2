@@ -254,7 +254,7 @@ function syncDatabases(){
     group by \
         p.ID"
         
-    //log_(sql)
+    log_(sql)
 
     con.query(sql, function (err1, result) {  
         if (err1) throw err1;                          
@@ -474,10 +474,8 @@ function payProductContinue(req, product, data){
         conLocal.query(sql, function (err1, result) {  
             if (err1) throw err1;  
 
-            soldTicket(product, idPayment, last, userId)
-
-            let now = moment().format("DD.MM.YYYY")
-
+            soldTicket(product, idPayment, last, userId)     
+            let now = moment().format("DD.MM.YYYY")       
             printFile(nome_produto, valor_produto, userName, now, last, finalValue)
         });    
     }
@@ -563,7 +561,11 @@ app.post('/sendEmail', function(req, res) {
 });
 
 app.post('/printTicket', function(req, res) {    
-    let idTicket = req.body.idTicket    
+    let idTicket = req.body.id_estoque_utilizavel
+    let order_items = req.body.order_items
+    let order_total = req.body.order_total
+    let paid_date = req.body.paid_date    
+
     printFile(idTicket)
     res.json({"success": "true"});  
 });
