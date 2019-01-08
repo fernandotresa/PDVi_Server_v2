@@ -1,7 +1,8 @@
 #!/bin/bash
 
 cd scripts
-cp impressao.zpl tmp.zpl
+cp reimpressao.zpl tmp.zpl
+
 
 
 SUBJECT=3a

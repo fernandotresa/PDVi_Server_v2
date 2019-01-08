@@ -146,19 +146,25 @@ var transporte = nodemailer.createTransport({
 });
 
 
-function printFile(tipoIngresso, valorIngresso, operador, dataHora, idTicket, totalVenda){
+function printFile(tipoIngresso, valorIngresso, operador, dataHora, idTicket, totalVenda, reprint){
     
     console.log("Realizando impressão do ingresso ", idTicket)
-    
+
     let cmd = 'sh scripts/impressao.sh "' + tipoIngresso + '" ' + valorIngresso + ' ' + operador + ' "' 
                 + dataHora + '" ' + idTicket + ' ' + totalVenda
-
+    
+    if(reprint === 1){
+        cmd = 'sh scripts/reimpressao.sh "' + tipoIngresso + '" ' + valorIngresso + ' ' + operador + ' "' 
+        + dataHora + '" ' + idTicket + ' ' + totalVenda
+    }
+    
     console.log(cmd)
 
-    shell.exec(cmd, function(code, stdout, stderr) {
+    shell.exec(cmd, {async: false}, function(code, stdout, stderr) {
         console.log('Exit code:', code);
         console.log('Program output:', stdout);
         console.log('Program stderr:', stderr);
+        
     }); 
 }
 
@@ -475,7 +481,7 @@ function payProductContinue(req, product, data){
 
             soldTicket(product, idPayment, last, userId)     
             let now = moment().format("DD.MM.YYYY")       
-            printFile(nome_produto, valor_produto, userName, now, last, finalValue)
+            printFile(nome_produto, valor_produto, userName, now, last, finalValue, 0)
         });    
     }
 }
@@ -569,17 +575,16 @@ app.post('/printTicket', function(req, res) {
     let data_log_venda = ticket.data_log_venda
     let fk_id_estoque_utilizavel = ticket.fk_id_estoque_utilizavel
     
-    printFile(nome_produto, valor_produto, userName, data_log_venda, fk_id_estoque_utilizavel, finalValue)
+    printFile(nome_produto, valor_produto, userName, data_log_venda, fk_id_estoque_utilizavel, finalValue, 0)
     res.json({"success": "true"});  
 });
 
 app.post('/printTicketMultiple', function(req, res) {    
     let tickets = req.body.tickets
     let userName = req.body.userName
+    let reprint = req.body.reprint
 
-    console.log(tickets.length)
-
-    for (var i = 0, len = tickets.length; i < len; i++) {
+    for (var i = 0, len = tickets.length; i < len; ++i) {
         
         let ticket = tickets[i]         
 
@@ -590,9 +595,9 @@ app.post('/printTicketMultiple', function(req, res) {
         let valor_log_venda = ticket.valor_log_venda
         
         let date = new Date(data_log_venda)
-        let now = moment(date).format("DD.MM.YYYY")       
+        let now = moment(date).format("MM.DD.YYYY")       
 
-        printFile(nome_produto, valor_produto, userName, now, fk_id_estoque_utilizavel, valor_log_venda)
+        printFile(nome_produto, valor_produto, userName, now, fk_id_estoque_utilizavel, valor_log_venda, reprint)
     }
     
     res.json({"success": "true"});  
@@ -618,7 +623,8 @@ app.post('/getPaymentsMethods', function(req, res) {
     let idTotem = req.body.id
 
     log_('Totem: '+ idTotem + ' - Verificando metodos de pagamento: ')
-            
+        
+    
     let sql = "SELECT 3a_tipo_pagamento.* FROM 3a_tipo_pagamento;";
     //log_(sql)
 
@@ -740,7 +746,7 @@ app.post('/getTicketOperator', function(req, res) {
         INNER join 3a_produto ON 3a_produto.id_produto = 3a_estoque_utilizavel.fk_id_produto \
         INNER join 3a_subtipo_produto ON 3a_subtipo_produto.id_subtipo_produto = 3a_log_vendas.fk_id_subtipo_produto \
         WHERE 3a_log_vendas.fk_id_usuarios = " + idUser + " \
-        AND 3a_log_vendas.data_log_venda BETWEEN '" + start + "' AND  '" + end + "';"
+        AND 3a_log_vendas.data_log_venda BETWEEN '" + start + "' AND  '" + end + "' ORDER BY 3a_log_vendas.data_log_venda;"
 
 
     log_(sql)
