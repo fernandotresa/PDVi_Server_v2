@@ -150,7 +150,7 @@ function printFile(tipoIngresso, valorIngresso, operador, dataHora, idTicket, to
     
     console.log("Realizando impressão do ingresso ", idTicket)
     
-    let cmd = 'sh scripts/impressao.sh ' + tipoIngresso + ' ' + valorIngresso + ' ' + operador + ' ' 
+    let cmd = 'sh scripts/impressao.sh "' + tipoIngresso + '" ' + valorIngresso + ' ' + operador + ' ' 
                 + dataHora + ' ' + idTicket + ' ' + totalVenda
 
     console.log(cmd)
@@ -254,7 +254,7 @@ function syncDatabases(){
     group by \
         p.ID"
         
-    log_(sql)
+    //log_(sql)
 
     con.query(sql, function (err1, result) {  
         if (err1) throw err1;                          
