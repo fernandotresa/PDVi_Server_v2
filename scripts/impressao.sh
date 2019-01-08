@@ -1,7 +1,6 @@
 #!/bin/bash
 
 cd scripts
-rm tmp*.zpl
 cp impressao.zpl tmp.zpl
 
 SUBJECT=3a
@@ -29,6 +28,8 @@ echo "$SUBJECT" | sed -e "s/$SEARCH_FOR_VALUE/$REPLACE_WITH_VALUE/g" tmp1.zpl > 
 echo "$SUBJECT" | sed -e "s/$SEARCH_FOR_OP/$REPLACE_WITH_OP/g" tmp2.zpl > tmp3.zpl &&
 echo "$SUBJECT" | sed -e "s/$SEARCH_FOR_DATE/$REPLACE_WITH_DATE/g" tmp3.zpl > tmp4.zpl &&
 echo "$SUBJECT" | sed -e "s/$SEARCH_FOR_TICKET/$REPLACE_WITH_TICKET/g" tmp4.zpl > tmp5.zpl &&
-echo "$SUBJECT" | sed -e "s/$SEARCH_FOR_TOTAL/$REPLACE_WITH_TOTAL/g" tmp5.zpl > tmp6.zpl 
+echo "$SUBJECT" | sed -e "s/$SEARCH_FOR_TOTAL/$REPLACE_WITH_TOTAL/g" tmp5.zpl > tmp6.zpl &&
 
-lpr -P Zebra_Technologies_ZTC_GC420t_ -o raw tmp6.zpl
+lpr -P Zebra_Technologies_ZTC_GC420t_ -o raw tmp6.zpl &&
+sleep 0.2
+rm tmp*.zpl
