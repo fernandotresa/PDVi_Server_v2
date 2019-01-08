@@ -150,8 +150,8 @@ function printFile(tipoIngresso, valorIngresso, operador, dataHora, idTicket, to
     
     console.log("Realizando impressão do ingresso ", idTicket)
     
-    let cmd = 'sh scripts/impressao.sh "' + tipoIngresso + '" ' + valorIngresso + ' ' + operador + ' ' 
-                + dataHora + ' ' + idTicket + ' ' + totalVenda
+    let cmd = 'sh scripts/impressao.sh "' + tipoIngresso + '" ' + valorIngresso + ' ' + operador + ' "' 
+                + dataHora + '" ' + idTicket + ' ' + totalVenda
 
     console.log(cmd)
 
@@ -449,7 +449,6 @@ function payProduct(req, res){
 function payProductContinue(req, product, data){            
 
     let id_estoque_utilizavel = data[0].TOTAL        
-    console.log(product)
     
     let userId = req.body.userId
     let userName = req.body.userName
@@ -467,7 +466,7 @@ function payProductContinue(req, product, data){
         let last = ++id_estoque_utilizavel
         
         let sql = "INSERT INTO 3a_estoque_utilizavel (id_estoque_utilizavel,fk_id_produto,fk_id_tipo_estoque,fk_id_usuarios_inclusao,data_inclusao_utilizavel, impresso) \
-        VALUES(" + last + ", " + id_produto + ", 1,1,NOW(), 1);"                       
+        VALUES(" + last + ", " + id_produto + ", 1," + userId + ", NOW(), 1);"                       
 
         log_(sql)   
     
@@ -560,13 +559,42 @@ app.post('/sendEmail', function(req, res) {
     });    
 });
 
-app.post('/printTicket', function(req, res) {    
-    let idTicket = req.body.id_estoque_utilizavel
-    let order_items = req.body.order_items
-    let order_total = req.body.order_total
-    let paid_date = req.body.paid_date    
+app.post('/printTicket', function(req, res) {        
+    let userName = req.body.userName
+    let finalValue = req.body.finalValue        
+    let ticket = req.body.ticket    
 
-    printFile(idTicket)
+    let nome_produto = ticket.nome_produto
+    let valor_produto = ticket.valor_produto
+    let data_log_venda = ticket.data_log_venda
+    let fk_id_estoque_utilizavel = ticket.fk_id_estoque_utilizavel
+    
+    printFile(nome_produto, valor_produto, userName, data_log_venda, fk_id_estoque_utilizavel, finalValue)
+    res.json({"success": "true"});  
+});
+
+app.post('/printTicketMultiple', function(req, res) {    
+    let tickets = req.body.tickets
+    let userName = req.body.userName
+
+    console.log(tickets.length)
+
+    for (var i = 0, len = tickets.length; i < len; i++) {
+        
+        let ticket = tickets[i]        
+
+        let nome_produto = ticket.nome_produto
+        let valor_produto = ticket.valor_produto
+        let data_log_venda = ticket.data_log_venda
+        let fk_id_estoque_utilizavel = ticket.fk_id_estoque_utilizavel
+        let valor_log_venda = ticket.valor_log_venda
+        
+        let date = new Date(data_log_venda)
+        let now = moment(date).format("DD.MM.YYYY")       
+
+        printFile(nome_produto, valor_produto, userName, now, fk_id_estoque_utilizavel, valor_log_venda)
+    }
+    
     res.json({"success": "true"});  
 });
 
@@ -685,18 +713,37 @@ app.post('/payProducts', function(req, res) {
     payProduct(req, res)
 });
 
-app.post('/getAuth', function(req, res) {
-
-    let idTotem = req.body.id
+app.post('/getAuth', function(req, res) {    
     let email = req.body.email
     let password = req.body.password
-
-    log_('Totem: '+ idTotem + ' - Verificando usuário: ' + email)
             
     let sql = "SELECT * FROM zoosp.3a_usuarios where login_usuarios = '" + email + "' \
         AND senha_usuarios = '" + password + "';";
 
     //log_(sql)
+
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });
+});
+
+app.post('/getTicketOperator', function(req, res) {
+
+    let idUser = req.body.idUser
+    let start = req.body.start
+    let end = req.body.end    
+
+    let sql = "SELECT *, false AS checked \
+            FROM 3a_estoque_utilizavel \
+        INNER JOIN 3a_log_vendas ON 3a_log_vendas.fk_id_estoque_utilizavel = 3a_estoque_utilizavel.id_estoque_utilizavel \
+        INNER join 3a_produto ON 3a_produto.id_produto = 3a_estoque_utilizavel.fk_id_produto \
+        INNER join 3a_subtipo_produto ON 3a_subtipo_produto.id_subtipo_produto = 3a_log_vendas.fk_id_subtipo_produto \
+        WHERE 3a_log_vendas.fk_id_usuarios = " + idUser + " \
+        AND 3a_log_vendas.data_log_venda BETWEEN '" + start + "' AND  '" + end + "';"
+
+
+    log_(sql)
 
     conLocal.query(sql, function (err1, result) {        
         if (err1) throw err1;           
