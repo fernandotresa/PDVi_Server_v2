@@ -581,7 +581,7 @@ app.post('/printTicketMultiple', function(req, res) {
 
     for (var i = 0, len = tickets.length; i < len; i++) {
         
-        let ticket = tickets[i]        
+        let ticket = tickets[i]         
 
         let nome_produto = ticket.nome_produto
         let valor_produto = ticket.valor_produto
