@@ -483,7 +483,9 @@ function payProductContinue(req, product, data){
             
             let date = new Date()
             let now = moment(date).format("DD.MM.YYYY kk:mm")       
-            printFile(nome_produto, valor_produto, userName, now, last, finalValue, 0)
+            console.log(now)
+
+            //printFile(nome_produto, valor_produto, userName, now, last, finalValue, 0)
         });    
     }
 }
