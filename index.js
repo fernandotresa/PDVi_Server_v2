@@ -596,12 +596,6 @@ app.post('/printTicketMultiple', function(req, res) {
         let data_log_venda = ticket.data_log_venda
         let fk_id_estoque_utilizavel = ticket.fk_id_estoque_utilizavel
         let valor_log_venda = ticket.valor_log_venda
-        
-        let date = new Date(data_log_venda)        
-        let now = moment(date).format("DD.MM.YYYY kk:mm")       
-
-        console.log(data_log_venda)
-        console.log(now)
 
         printFile(nome_produto, valor_produto, userName, data_log_venda, fk_id_estoque_utilizavel, valor_log_venda, reprint)
     }
