@@ -158,7 +158,7 @@ function printFile(tipoIngresso, valorIngresso, operador, dataHora, idTicket, to
         + dataHora + '" ' + idTicket + ' ' + totalVenda
     }
     
-    //console.log(cmd)
+    console.log(cmd)
 
     shell.exec(cmd, {async: false}, function(code, stdout, stderr) {
         console.log('Exit code:', code);
@@ -483,9 +483,8 @@ function payProductContinue(req, product, data){
             
             let date = new Date()
             let now = moment(date).format("DD.MM.YYYY kk:mm")       
-            console.log(now)
-
-            //printFile(nome_produto, valor_produto, userName, now, last, finalValue, 0)
+            
+            printFile(nome_produto, valor_produto, userName, now, last, finalValue, 0)
         });    
     }
 }
