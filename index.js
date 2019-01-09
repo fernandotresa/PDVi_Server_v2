@@ -158,7 +158,7 @@ function printFile(tipoIngresso, valorIngresso, operador, dataHora, idTicket, to
         + dataHora + '" ' + idTicket + ' ' + totalVenda
     }
     
-    console.log(cmd)
+    //console.log(cmd)
 
     shell.exec(cmd, {async: false}, function(code, stdout, stderr) {
         console.log('Exit code:', code);
@@ -260,7 +260,7 @@ function syncDatabases(){
     group by \
         p.ID"
         
-    log_(sql)
+    //log_(sql)
 
     con.query(sql, function (err1, result) {  
         if (err1) throw err1;                          
