@@ -260,7 +260,7 @@ function syncDatabases(){
     group by \
         p.ID"
         
-    //log_(sql)
+    log_(sql)
 
     con.query(sql, function (err1, result) {  
         if (err1) throw err1;                          
@@ -746,8 +746,8 @@ app.post('/getTicketOperator', function(req, res) {
         INNER join 3a_produto ON 3a_produto.id_produto = 3a_estoque_utilizavel.fk_id_produto \
         INNER join 3a_subtipo_produto ON 3a_subtipo_produto.id_subtipo_produto = 3a_log_vendas.fk_id_subtipo_produto \
         WHERE 3a_log_vendas.fk_id_usuarios = " + idUser + " \
-        AND 3a_log_vendas.data_log_venda BETWEEN '" + start + "' AND  '" + end + "' ORDER BY 3a_log_vendas.data_log_venda;"
-
+        AND 3a_log_vendas.data_log_venda BETWEEN '" + start + "' AND  '" + end + "' \
+        ORDER BY 3a_log_vendas.data_log_venda DESC;"
 
     log_(sql)
 
