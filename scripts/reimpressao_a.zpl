@@ -14,7 +14,7 @@
 ^FO100,170^FD%5^FS
 
 ^CFA,15
-^FO100,200^FD%4^FS
+^FO100,200^FD%4^F
 
 ^CFA,15
 ^FO300,110^FD  Ingresso valido para um acesso^FS
@@ -22,9 +22,17 @@
 ^FO250,150^FD Fundacao Parque Zoologico de Sao Paulo^FS
 ^FO300,170^FD   CNPJ: 60.889.573/00001-40^FS
 
-^FO300,190^FD    Total da venda: R$ %6^FS
-^FO300,210^FD^FS
-^FO300,230^FD   Tecnologia: www.3a.com.br^FS
+
+
+^FO300,190^FD^FS
+
+
+
+
+^FO300,210^FD   Tecnologia: www.3a.com.br^FS
+
+^CFA,25
+^FO320,240^FDREIMPRESSAO^FS
 
 ^BY4,2,110
 ^FO180,270^BC^FD%5^FS

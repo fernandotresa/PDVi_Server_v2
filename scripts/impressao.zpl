@@ -1,24 +1,52 @@
 ^XA
 
 ^CFA,15
-^FO250,10^FD%1^FS
-^FO250,30^FDR$%2^FS
-^FO250,50^FDOperador^FS
-^FO250,70^FD%3^FS
-^FO250,90^FD%4^FS
-^FO250,110^FDBilhete %5^FS
+^FO40,60^FDLINHA ORCA^FS
+^FO40,80^FDBILHETE DE^FS
+^FO40,100^FDTRANSPORTE^FS
+^FO20,120^FD%4^FS
+^FO40,140^FD Jabaquara^FS
+^FO40,160^FD Zoologico^FS
+
+^CFA,25
+^FO40,180^FD%5^FS
 
 ^CFA,15
-^FO450,10^FDIngresso valido para um acesso^FS
-^FO450,30^FDNao molhe nem dobre seu ingresso^FS
-^FO400,50^FDFundacao Parque zoologico de Sao Paulo^FS
-^FO450,70^FDCNPJ: 60.889.573/00001-40^FS
+^FO40,250^FDLINHA ORCA^FS
+^FO40,270^FDBILHETE DE^FS
+^FO40,290^FDTRANSPORTE^FS
+^FO20,310^FD%4^FS
+^FO40,330^FD Zoologico^FS
+^FO40,350^FD Jabaquara^FS
 
-^FO450,90^FDTotal da venda: R$ %6^FS
-^FO450,110^FDFotografia: Carlos N.^FS
-^FO450,130^FDTecnologia: www.3a.com.br^FS
+^CFA,25
+^FO40,370^FD%5^FS
 
-^BY5,2,70
-^FO250,180^BC^FD%5^FS
+
+^CFA,25
+^FO250,50^FD%1^FS
+^CFA,15
+^FO250,90^FDR$%2^FS
+^FO250,110^FDOperador^FS
+^FO250,130^FD%3^FS
+^FO250,150^FDBilhete:^FS
+^CFA,25
+^FO250,170^FD%5^FS
+^CFA,15
+^FO250,200^FD%4^FS
+
+
+^CFA,15
+^FO420,110^FD  Ingresso valido para um acesso^FS
+^FO420,130^FD Nao molhe nem dobre seu ingresso^FS
+^FO420,150^FDFundacao Parque Zoologico Sao Paulo^FS
+^FO420,170^FD   CNPJ: 60.889.573/00001-40^FS
+
+^FO420,190^FD    Total da venda: R$ %6^FS
+^FO420,210^FD^FS
+^FO420,230^FD   Tecnologia: www.3a.com.br^FS
+
+^BY4,2,110
+^FO270,250^BC^FD%5^FS
 
 ^XZ
