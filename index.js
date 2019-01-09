@@ -480,7 +480,7 @@ function payProductContinue(req, product, data){
             if (err1) throw err1;  
 
             soldTicket(product, idPayment, last, userId)     
-            let now = moment().format("DD.MM.YYYY")       
+            let now = moment().format("DD.MM.YYYY hh:mm")       
             printFile(nome_produto, valor_produto, userName, now, last, finalValue, 0)
         });    
     }
@@ -594,8 +594,8 @@ app.post('/printTicketMultiple', function(req, res) {
         let fk_id_estoque_utilizavel = ticket.fk_id_estoque_utilizavel
         let valor_log_venda = ticket.valor_log_venda
         
-        let date = new Date(data_log_venda)
-        let now = moment(date).format("MM.DD.YYYY")       
+        let date = new Date(data_log_venda)        
+        let now = moment(date).format("DD.MM.YYYY hh:mm")       
 
         printFile(nome_produto, valor_produto, userName, now, fk_id_estoque_utilizavel, valor_log_venda, reprint)
     }
