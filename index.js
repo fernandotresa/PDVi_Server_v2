@@ -480,7 +480,7 @@ function payProductContinue(req, product, data){
             if (err1) throw err1;  
 
             soldTicket(product, idPayment, last, userId)     
-            let now = moment().format("DD.MM.YYYY hh:mm")       
+            let now = moment().format("DD.MM.YYYY kk:mm")       
             printFile(nome_produto, valor_produto, userName, now, last, finalValue, 0)
         });    
     }
