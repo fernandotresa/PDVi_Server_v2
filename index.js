@@ -18,6 +18,8 @@ var emailFrom = 'myrestaurantwebapp@gmail.com'
 var emailSubject = 'Qr Code ingresso'
 var pathQRCode = './qrcodes/'
 
+var worksOnline = 0
+
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(methodOverride());
@@ -120,13 +122,15 @@ function handleDisconnectLocal() {
 
 function startInterface(){
 
-    //handleDisconnectRemote();
-    handleDisconnectLocal();
+    if(worksOnline === 1){
+        handleDisconnectRemote();    
 
-    /*setInterval(function(){ 
+        setInterval(function(){ 
         syncDatabases()
-     }, synctime);*/
-    
+     }, synctime);
+    }    
+
+    handleDisconnectLocal();        
 }
 
 startInterface();
@@ -163,8 +167,7 @@ function printFile(tipoIngresso, valorIngresso, operador, dataHora, idTicket, to
     shell.exec(cmd, {async: false}, function(code, stdout, stderr) {
         console.log('Exit code:', code);
         console.log('Program output:', stdout);
-        console.log('Program stderr:', stderr);
-        
+        console.log('Program stderr:', stderr);        
     }); 
 }
 
@@ -727,6 +730,29 @@ app.post('/getAuth', function(req, res) {
         AND senha_usuarios_pdvi = '" + password + "';";
 
     //log_(sql)
+
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });
+});
+
+app.post('/getTicketParking', function(req, res) {    
+    console.log(req.body)
+    let id_estoque_utilizavel = req.body.idTicket
+                
+    let sql = "SELECT 3a_produto.nome_produto,\
+                3a_produto.valor_produto,\
+                3a_log_vendas.data_log_venda,\
+                3a_ponto_acesso.nome_ponto_acesso,\
+                3a_estoque_utilizavel.data_inclusao_utilizavel \
+            FROM 3a_estoque_utilizavel \
+            LEFT JOIN 3a_log_vendas ON 3a_log_vendas.fk_id_estoque_utilizavel = 3a_estoque_utilizavel.id_estoque_utilizavel \
+            INNER join 3a_produto ON 3a_produto.id_produto = 3a_estoque_utilizavel.fk_id_produto \
+            INNER join 3a_ponto_acesso ON 3a_ponto_acesso.id_ponto_acesso = 3a_estoque_utilizavel.fk_id_ponto_acesso_gerado \
+            WHERE id_estoque_utilizavel = " + id_estoque_utilizavel + ";";
+
+    log_(sql)
 
     conLocal.query(sql, function (err1, result) {        
         if (err1) throw err1;           
