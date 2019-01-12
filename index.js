@@ -433,26 +433,48 @@ function payProduct(req, res){
     for (var i = 0, len = products.length; i < len; i++) {
         
         let product = products[i]
-        let prefixo = products[i].prefixo_produto
-        let prefixo_ini=prefixo*1000000;
-        let prefixo_fim=prefixo_ini+999999;
-        
-        let sql = "SELECT IFNULL(MAX(id_estoque_utilizavel), " + prefixo_ini + ") AS TOTAL \
-            FROM 3a_estoque_utilizavel \
-            WHERE id_estoque_utilizavel \
-            BETWEEN " + prefixo_ini + " \
-            AND " + prefixo_fim + ";"        
 
-        log_(sql)    
+        let isParking = product.parking
 
-        conLocal.query(sql, function (err1, result) {  
-            if (err1) throw err1;    
-                                              
-            payProductContinue(req, product, result)
-        });
-      }
-      
-      res.json({"success": 1});  
+        if(isParking)
+            payParking(req, product)
+        else
+            payProductNormal(req, product)                    
+    }          
+
+    res.json({"success": 1});  
+}
+
+function payProductNormal(req, product){
+
+    let prefixo = product.prefixo_produto
+    let prefixo_ini=prefixo*1000000;
+    let prefixo_fim=prefixo_ini+999999;
+    
+    let sql = "SELECT IFNULL(MAX(id_estoque_utilizavel), " + prefixo_ini + ") AS TOTAL \
+        FROM 3a_estoque_utilizavel \
+        WHERE id_estoque_utilizavel \
+        BETWEEN " + prefixo_ini + " \
+        AND " + prefixo_fim + ";"        
+
+    log_(sql)    
+
+    conLocal.query(sql, function (err1, result) {  
+        if (err1) throw err1;                                                
+        payProductContinue(req, product, result)
+    });
+}
+
+function payParking(req, product){
+    
+    let userId = req.body.userId    
+    let idPayment = req.body.idPayment    
+    let quantity = product.quantity
+    let last = product.id_estoque_utilizavel
+
+    for(var j = 0; j < quantity; j++){        
+        soldTicket(product, idPayment, last, userId)         
+    }    
 }
 
 function payProductContinue(req, product, data){            
