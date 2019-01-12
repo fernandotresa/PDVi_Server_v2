@@ -738,13 +738,16 @@ app.post('/getAuth', function(req, res) {
 });
 
 app.post('/getTicketParking', function(req, res) {    
-    console.log(req.body)
+    
     let id_estoque_utilizavel = req.body.idTicket
                 
     let sql = "SELECT 3a_produto.nome_produto,\
+                3a_produto.prefixo_produto,\
+                3a_produto.id_produto,\
                 3a_produto.valor_produto,\
                 3a_log_vendas.data_log_venda,\
                 3a_ponto_acesso.nome_ponto_acesso,\
+                3a_produto.fk_id_subtipo_produto,\
                 3a_estoque_utilizavel.id_estoque_utilizavel,\
                 3a_estoque_utilizavel.data_inclusao_utilizavel \
             FROM 3a_estoque_utilizavel \
