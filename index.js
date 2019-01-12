@@ -745,6 +745,7 @@ app.post('/getTicketParking', function(req, res) {
                 3a_produto.valor_produto,\
                 3a_log_vendas.data_log_venda,\
                 3a_ponto_acesso.nome_ponto_acesso,\
+                3a_estoque_utilizavel.id_estoque_utilizavel,\
                 3a_estoque_utilizavel.data_inclusao_utilizavel \
             FROM 3a_estoque_utilizavel \
             LEFT JOIN 3a_log_vendas ON 3a_log_vendas.fk_id_estoque_utilizavel = 3a_estoque_utilizavel.id_estoque_utilizavel \
