@@ -747,7 +747,7 @@ app.post('/payProducts', function(req, res) {
 app.post('/getAuth', function(req, res) {    
     let email = req.body.email
     let password = req.body.password
-            
+                
     let sql = "SELECT * FROM 3a_usuarios where login_usuarios = '" + email + "' \
         AND senha_usuarios_pdvi = '" + password + "';";
 
