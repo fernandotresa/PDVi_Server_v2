@@ -230,6 +230,9 @@ function generateQrCode(ticket){
     );
 }
 
+/**
+ * Get all itens avaiable for the client on store
+ */
 function getProductsClient(){
 
     let sql = "SELECT wp_term_relationships.object_id \
@@ -241,7 +244,7 @@ function getProductsClient(){
                 AND taxonomy = 'product_cat' \
                 AND name = '" + clientName + "'"; 
 
-    log_(sql)
+    //log_(sql)
 
     con.query(sql, function (err1, result) {  
         if (err1) throw err1;                          
@@ -250,6 +253,9 @@ function getProductsClient(){
     });   
 }
 
+/**
+ * Keep the results on clientItensOnline
+ */
 function populateProductClientArray(data){
 
     for (var i = 0; i < data.length; i++) {
@@ -258,6 +264,10 @@ function populateProductClientArray(data){
     }
 }
 
+/**
+ * Search for new products to synchonize. 
+ * Use the specific WHERE In combination with the clientItensOline array
+ */
 function syncDatabases(){
 	
     let sql = "SELECT \
@@ -308,25 +318,33 @@ function syncDatabases(){
     });
 }
 
+/**
+ * Separate the order products and create on the local base the specifics itens  
+ */
 function syncDatabaseContinue(data){
+    
+    log_("Sincronizando novas compras")
+    
+    for (var i = 0; i < data.length; i++) {                
 
-    for (var i = 0; i < data.length; i++) {
-        
         let itens = data[i]
         let order_items = itens.order_items
-        let arr = order_items.toString().split("|");            
-                    
+        let arr = order_items.toString().split("|");                                        
+
         for (var k = 0; k < arr.length; k++) {
 
-            let produto = arr[k]                                           
-            createTicketBaseLocal(produto, itens)        
+            let produto = arr[k]                                                                  
+            createTicketBaseLocal(produto, itens, i)        
         }                  
     }    
 }
 
-async function createTicketBaseLocal(product, itens){
+/**
+ * Search information about the product on local base
+ */
+function createTicketBaseLocal(productName, itens, k){
 
-    let sql = "SELECT * FROM 3a_produto WHERE nome_produto = '" + product + "';";
+    let sql = "SELECT * FROM 3a_produto WHERE nome_produto = '" + productName + "';";
     
     conLocal.query(sql, function (err1, result) {  
         if (err1) throw err1;                                                
@@ -339,25 +357,23 @@ async function createTicketBaseLocal(product, itens){
             let prefixo_ini=prefixo*1000000;
             let prefixo_fim=prefixo_ini+999999;
         
-            let sqlPrefix = "SELECT IFNULL(MAX(id_estoque_utilizavel), " + prefixo_ini + ") AS id_estoque_utilizavel \
+            let sqlPrefix = "SELECT IFNULL(MAX(id_estoque_utilizavel) + 1, " + prefixo_ini + ") AS id_estoque_utilizavel \
                 FROM 3a_estoque_utilizavel \
                 WHERE id_estoque_utilizavel \
                 BETWEEN " + prefixo_ini + " \
                 AND " + prefixo_fim + ";"        
 
             conLocal.query(sqlPrefix, function (err1, result1) {  
-                if (err1) throw err1;    
+                if (err1) throw err1;                    
 
-                log_(sqlPrefix)    
-
-                let id_estoque_utilizavel = result1[0].id_estoque_utilizavel                
-                id_estoque_utilizavel++
-
-                createTicketDatabaseLocalFinish(product, id_estoque_utilizavel)
+                let id_estoque_utilizavel = result1[0].id_estoque_utilizavel    
+                let id_estoque =  id_estoque_utilizavel + k    
+                
+                createTicketDatabaseLocal(product, id_estoque)                
                 createTicketBaseLocalContinue(result1, itens, product)                
             });        
         }                
-    });        
+    }); 
 }
 
 function createTicketBaseLocalContinue(data, itens, product){    
@@ -397,28 +413,23 @@ function createTicketBaseLocalContinue(data, itens, product){
             _shipping_city + "', '" + _shipping_state + "', '" + _shipping_postcode + "', " + order_total + ", " + order_tax + ", '" + paid_date + "', '"  + order_items + "', " + 
             id_estoque_utilizavel + ", '" + _billing_cpf + "');";
 
-    log_(sql)
-
     conLocal.query(sql, function (err1, result) {  
         if (err1) throw err1;                              
     });
 }
 
-function createTicketDatabaseLocalFinish(product, id_estoque_utilizavel){
+function createTicketDatabaseLocal(product, id_estoque_utilizavel){
 
     let id_produto = product.id_produto
     let userId = 1
-    id_estoque_utilizavel++
 
     let sql = "INSERT INTO 3a_estoque_utilizavel (id_estoque_utilizavel,fk_id_produto,fk_id_tipo_estoque,fk_id_usuarios_inclusao,data_inclusao_utilizavel, impresso) \
         VALUES(" + id_estoque_utilizavel + ", " + id_produto + ", 1," + userId + ", NOW(), 1);"                       
 
-    log_(sql)   
-
     conLocal.query(sql, function (err1, result) {  
         if (err1) throw err1;  
 
-        //soldTicket(product, 1, id_estoque_utilizavel, userId)                            
+        soldTicket(product, "ONLINE", id_estoque_utilizavel, userId)                            
     });    
 }
 
