@@ -11,6 +11,8 @@ var qr = require('qr-image');
 let shell = require('shelljs');
 
 const synctime = 10000;
+let clientName = 'Museu de Arte Sacra'
+let clientItensOnline = []
 
 const nodemailer = require('nodemailer');
 var msgEmail = 'Olá! Obrigado por adquirir o ingresso. Segue em anexo o qrcode. <strong>https://www.megaticket.com.br</strong>'
@@ -18,7 +20,7 @@ var emailFrom = 'myrestaurantwebapp@gmail.com'
 var emailSubject = 'Qr Code ingresso'
 var pathQRCode = './qrcodes/'
 
-var worksOnline = 0
+var worksOnline = 1
 
 app.use(logger('dev'));
 app.use(bodyParser.json());
@@ -123,7 +125,9 @@ function handleDisconnectLocal() {
 function startInterface(){
 
     if(worksOnline === 1){
+        
         handleDisconnectRemote();    
+        getProductsClient()
 
         setInterval(function(){ 
         syncDatabases()
@@ -226,10 +230,37 @@ function generateQrCode(ticket){
     );
 }
 
+function getProductsClient(){
+
+    let sql = "SELECT wp_term_relationships.object_id \
+            FROM wp_term_relationships \
+            LEFT JOIN wp_posts  ON wp_term_relationships.object_id = wp_posts.ID \
+            LEFT JOIN wp_term_taxonomy ON wp_term_taxonomy.term_taxonomy_id = wp_term_relationships.term_taxonomy_id \
+            LEFT JOIN wp_terms ON wp_terms.term_id = wp_term_relationships.term_taxonomy_id \
+                WHERE post_type = 'product' \
+                AND taxonomy = 'product_cat' \
+                AND name = '" + clientName + "'"; 
+
+    log_(sql)
+
+    con.query(sql, function (err1, result) {  
+        if (err1) throw err1;                          
+                
+        populateProductClientArray(result)
+    });   
+}
+
+function populateProductClientArray(data){
+
+    for (var i = 0; i < data.length; i++) {
+        object_id = data[i].object_id
+        clientItensOnline.push(object_id)        
+    }
+}
+
 function syncDatabases(){
-	//log_("Verificando novas vendas")
 	
-    let sql = "select \
+    let sql = "SELECT \
         p.ID as order_id,\
         p.post_date,\
         max( CASE WHEN pm.meta_key = '_billing_email' and p.ID = pm.post_id THEN pm.meta_value END ) as billing_email,\
@@ -252,15 +283,19 @@ function syncDatabases(){
         max( CASE WHEN pm.meta_key = '_order_tax' and p.ID = pm.post_id THEN pm.meta_value END ) as order_tax,\
         max( CASE WHEN pm.meta_key = '_paid_date' and p.ID = pm.post_id THEN pm.meta_value END ) as paid_date,\
         ( select group_concat( order_item_name separator '|' ) from wp_woocommerce_order_items where order_id = p.ID ) as order_items \
-    from \
+    FROM \
         wp_posts p \
-        join wp_postmeta pm on p.ID = pm.post_id \
-        join wp_woocommerce_order_items oi on p.ID = oi.order_id \
-    where \
-        post_type = 'shop_order' and \
-		sync = 0 and \
-        post_status = 'wc-completed' \
-    group by \
+        JOIN wp_postmeta pm on p.ID = pm.post_id \
+        JOIN wp_woocommerce_order_items oi on p.ID = oi.order_id \
+        INNER JOIN wp_woocommerce_order_items as woi on ( woi.order_id = p.ID ) \
+        INNER JOIN wp_woocommerce_order_itemmeta as woim on ( woim.order_item_id = woi.order_item_id ) \
+        INNER JOIN wp_term_relationships as wtr on ( wtr.object_id = woim.meta_value ) \
+    WHERE \
+        post_type = 'shop_order' \
+		AND sync = 0 \
+        AND post_status = 'wc-completed' \
+        AND wtr.object_id IN (" + clientItensOnline + ") \
+    GROUP BY \
         p.ID"
         
     //log_(sql)
@@ -273,101 +308,118 @@ function syncDatabases(){
     });
 }
 
-function syncDatabaseContinue(data){   
-    log_("Preparando base local para sincronização")
+function syncDatabaseContinue(data){
 
-    let sql = "SELECT id_estoque_utilizavel FROM 3a_estoque_utilizavel ORDER BY id_estoque_utilizavel DESC LIMIT 1";
-    //log_(sql)
+    for (var i = 0; i < data.length; i++) {
+        
+        let itens = data[i]
+        let order_items = itens.order_items
+        let arr = order_items.toString().split("|");            
+                    
+        for (var k = 0; k < arr.length; k++) {
 
-    conLocal.query(sql, function (err1, result) {  
-        if (err1) throw err1;   
-
-        createTicket(result, data)
-    });    
+            let produto = arr[k]                                           
+            createTicketBaseLocal(produto, itens)        
+        }                  
+    }    
 }
 
-function createTicket(tickets, data){
+async function createTicketBaseLocal(product, itens){
+
+    let sql = "SELECT * FROM 3a_produto WHERE nome_produto = '" + product + "';";
     
-    let order_id = 0;
-    let billing_email;
-    let qrcodesTickets = []
-
-    for (var j = 0; j < tickets.length; j++) {        
-
-        let id_estoque_utilizavel = tickets[j].id_estoque_utilizavel
-        let id_ticket_criado = ++id_estoque_utilizavel
-
-        for (var i = 0; i < data.length; i++) {
-
-            order_id = data[i].order_id
-            updateTicketsSyncIds(order_id)
-
-            let order_items = data[i].order_items
-            var arr = order_items.toString().split("|");            
-            let post_date = data[i].post_date
-            billing_email = data[i].billing_email
-            let _billing_first_name = data[i]._billing_first_name
-            let _billing_last_name = data[i]._billing_last_name
-            let _billing_address_1 = data[i]._billing_address_1
-            let _billing_address_2 = data[i]._billing_address_2
-            let _billing_city = data[i]._billing_city
-            let _billing_cpf = data[i]._billing_cpf
-            let _billing_state = data[i]._billing_state
-            let _billing_postcode = data[i]._billing_postcode
-            let _shipping_first_name = data[i]._shipping_first_name
-            let _shipping_last_name = data[i]._shipping_last_name
-            let _shipping_address_1 = data[i]._shipping_address_1
-            let _shipping_address_2 = data[i]._shipping_address_2
-            let _shipping_city = data[i]._shipping_city
-            let _shipping_state = data[i]._shipping_state
-            let _shipping_postcode = data[i]._shipping_postcode
-            let order_total = data[i].order_total
-            let order_tax = data[i].order_tax
-            let paid_date = data[i].paid_date            
-            
-            for (var k = 0; k < arr.length; k++) {
-
-                let produto = arr[k]                
-                let ticketId = id_ticket_criado++        
-                
-                let msg = "Criando ingresso: " +  ticketId + " - Produto: " + produto + " - Ordem de venda: " + order_id
-                log_(msg)
-
-                let sql = "INSERT INTO 3a_estoque_utilizavel (id_estoque_utilizavel,fk_id_produto,fk_id_tipo_estoque,fk_id_usuarios_inclusao,data_inclusao_utilizavel, impresso) \
-                    VALUES(" + ticketId + ",\
-                        (SELECT id_produto FROM 3a_produto WHERE nome_produto = '" + produto + "' ORDER BY id_produto DESC LIMIT 1 ),\
-                        1,1,NOW(), 1);"                                          
-                        
-                let sqlOnline = "INSERT INTO 3a_vendas_online (order_id, post_date, billing_email, _billing_first_name, _billing_last_name, _billing_address_1,\
-                    _billing_address_2, _billing_city, _billing_state, _billing_postcode, _shipping_first_name, _shipping_last_name, _shipping_address_1, _shipping_address_2, _shipping_city, _shipping_state,\
-                    _shipping_postcode, order_total, order_tax, paid_date, order_items, id_estoque_utilizavel, _billing_cpf) VALUES \
-                        (" + order_id + ", '" + post_date + "', '" + billing_email + "', '" + _billing_first_name + "', '" + _billing_last_name + "', '" + _billing_address_1 + "', '" + _billing_address_2 + "', '" + _billing_city + "', '" +
-                        _billing_state + "', '" + _billing_postcode + "', '" + _shipping_first_name + "', '" + _shipping_last_name + "', '" + _shipping_address_1 + "', '" + _shipping_address_2 + "', '" +
-                        _shipping_city + "', '" + _shipping_state + "', '" + _shipping_postcode + "', " + order_total + ", " + order_tax + ", '" + paid_date + "', '"  + produto + "', " + ticketId + ", '" + _billing_cpf + "');";
-
-                //log_(sql)
-                //log_(sqlOnline)
-
-                conLocal.query(sql, function (err1, result) {  
-                    if (err1) throw err1;                                                               
-
-                    soldTicket(ticketId, produto, order_total, 1)   
-
-                    generateQrCode(ticketId)
-
-                    qrcodesTickets.push(ticketId)
-                    
-                    conLocal.query(sqlOnline, function (err2, result2) {  
-                        if (err2) throw err2;                          
-                    });
-                });                
-            }                  
-        }
-    }
+    conLocal.query(sql, function (err1, result) {  
+        if (err1) throw err1;                                                
     
-    setTimeout(function(){ 
-        sendEmail(qrcodesTickets, billing_email)
-    }, 3000);
+        let product = result[0]
+
+        if(product){
+
+            let prefixo = product.prefixo_produto
+            let prefixo_ini=prefixo*1000000;
+            let prefixo_fim=prefixo_ini+999999;
+        
+            let sqlPrefix = "SELECT IFNULL(MAX(id_estoque_utilizavel), " + prefixo_ini + ") AS id_estoque_utilizavel \
+                FROM 3a_estoque_utilizavel \
+                WHERE id_estoque_utilizavel \
+                BETWEEN " + prefixo_ini + " \
+                AND " + prefixo_fim + ";"        
+
+            conLocal.query(sqlPrefix, function (err1, result1) {  
+                if (err1) throw err1;    
+
+                log_(sqlPrefix)    
+
+                let id_estoque_utilizavel = result1[0].id_estoque_utilizavel                
+                id_estoque_utilizavel++
+
+                createTicketDatabaseLocalFinish(product, id_estoque_utilizavel)
+                createTicketBaseLocalContinue(result1, itens, product)                
+            });        
+        }                
+    });        
+}
+
+function createTicketBaseLocalContinue(data, itens, product){    
+    
+    let order_id = itens.order_id
+    updateTicketsSyncIds(order_id)
+
+    let order_items = itens.order_items
+    let post_date = itens.post_date
+    let billing_email = itens.billing_email
+    let _billing_first_name = itens._billing_first_name
+    let _billing_last_name = itens._billing_last_name
+    let _billing_address_1 = itens._billing_address_1
+    let _billing_address_2 = itens._billing_address_2
+    let _billing_city = itens._billing_city
+    let _billing_cpf = itens._billing_cpf
+    let _billing_state = itens._billing_state
+    let _billing_postcode = itens._billing_postcode
+    let _shipping_first_name = itens._shipping_first_name
+    let _shipping_last_name = itens._shipping_last_name
+    let _shipping_address_1 = itens._shipping_address_1
+    let _shipping_address_2 = itens._shipping_address_2
+    let _shipping_city = itens._shipping_city
+    let _shipping_state = itens._shipping_state
+    let _shipping_postcode = itens._shipping_postcode
+    let order_total = itens.order_total
+    let order_tax = itens.order_tax
+    let paid_date = itens.paid_date 
+
+    let id_estoque_utilizavel = data[0].id_estoque_utilizavel
+                       
+    let sql = "INSERT INTO 3a_vendas_online (order_id, post_date, billing_email, _billing_first_name, _billing_last_name, _billing_address_1,\
+        _billing_address_2, _billing_city, _billing_state, _billing_postcode, _shipping_first_name, _shipping_last_name, _shipping_address_1, _shipping_address_2, _shipping_city, _shipping_state,\
+        _shipping_postcode, order_total, order_tax, paid_date, order_items, id_estoque_utilizavel, _billing_cpf) VALUES \
+            (" + order_id + ", '" + post_date + "', '" + billing_email + "', '" + _billing_first_name + "', '" + _billing_last_name + "', '" + _billing_address_1 + "', '" + _billing_address_2 + "', '" + _billing_city + "', '" +
+            _billing_state + "', '" + _billing_postcode + "', '" + _shipping_first_name + "', '" + _shipping_last_name + "', '" + _shipping_address_1 + "', '" + _shipping_address_2 + "', '" +
+            _shipping_city + "', '" + _shipping_state + "', '" + _shipping_postcode + "', " + order_total + ", " + order_tax + ", '" + paid_date + "', '"  + order_items + "', " + 
+            id_estoque_utilizavel + ", '" + _billing_cpf + "');";
+
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {  
+        if (err1) throw err1;                              
+    });
+}
+
+function createTicketDatabaseLocalFinish(product, id_estoque_utilizavel){
+
+    let id_produto = product.id_produto
+    let userId = 1
+    id_estoque_utilizavel++
+
+    let sql = "INSERT INTO 3a_estoque_utilizavel (id_estoque_utilizavel,fk_id_produto,fk_id_tipo_estoque,fk_id_usuarios_inclusao,data_inclusao_utilizavel, impresso) \
+        VALUES(" + id_estoque_utilizavel + ", " + id_produto + ", 1," + userId + ", NOW(), 1);"                       
+
+    log_(sql)   
+
+    conLocal.query(sql, function (err1, result) {  
+        if (err1) throw err1;  
+
+        //soldTicket(product, 1, id_estoque_utilizavel, userId)                            
+    });    
 }
 
 function soldTicket(produto, tipoPagamento, last, userId){
@@ -433,7 +485,6 @@ function payProduct(req, res){
     for (var i = 0, len = products.length; i < len; i++) {
         
         let product = products[i]
-
         let isParking = product.parking
 
         if(isParking)
