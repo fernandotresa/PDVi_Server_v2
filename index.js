@@ -925,7 +925,7 @@ app.post('/confirmCashChange', function(req, res) {
 });
 
 app.post('/getCashDrain', function(req, res) {    
-    let idUser = req.body.idUser_    
+    let idUser = req.body.idUser  
     let start = req.body.start
     let end = req.body.end
                 
@@ -941,11 +941,11 @@ app.post('/getCashDrain', function(req, res) {
 })
 
 app.post('/getCashChange', function(req, res) {    
-    let idUser = req.body.idUser_ 
+    let idUser = req.body.idUser 
     let start = req.body.start
     let end = req.body.end   
                 
-    let sql = "SELECT SUM(valor_inclusao) \
+    let sql = "SELECT SUM(valor_inclusao) AS TOTAL \
             FROM 3a_troco where fk_id_usuario = " + idUser + " \
             AND data_inclusao BETWEEN '" + start + "' AND '" + end + "';";
     log_(sql)
@@ -956,14 +956,14 @@ app.post('/getCashChange', function(req, res) {
     });
 })
 
-app.post('/getCashChange', function(req, res) {    
-    let idUser = req.body.idUser_ 
+app.post('/getTotalTickets', function(req, res) {    
+    let idUser = req.body.idUser 
     let start = req.body.start
     let end = req.body.end   
                 
-    let sql = "SELECT SUM(valor_inclusao) \
-            FROM 3a_troco where fk_id_usuario = " + idUser + " \
-            AND data_inclusao BETWEEN '" + start + "' AND '" + end + "';";
+    let sql = "SELECT SUM(valor_log_venda) AS TOTAL \
+            FROM 3a_log_vendas where fk_id_usuarios = " + idUser + " \
+            AND data_log_venda BETWEEN '" + start + "' AND '" + end + "';";
     log_(sql)
 
     conLocal.query(sql, function (err1, result) {        
