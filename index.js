@@ -926,8 +926,12 @@ app.post('/confirmCashChange', function(req, res) {
 
 app.post('/getCashDrain', function(req, res) {    
     let idUser = req.body.idUser_    
+    let start = req.body.start
+    let end = req.body.end
                 
-    let sql = "SELECT * FROM 3a_sangria where fk_id_usuario = " + idUser + ";";
+    let sql = "SELECT SUM(valor_sangria)  AS TOTAL \
+            FROM 3a_sangria where fk_id_usuario = " + idUser + " \
+            AND data_sangria BETWEEN '" + start + "' AND '" + end + "';";
     log_(sql)
 
     conLocal.query(sql, function (err1, result) {        
@@ -937,9 +941,29 @@ app.post('/getCashDrain', function(req, res) {
 })
 
 app.post('/getCashChange', function(req, res) {    
-    let idUser = req.body.idUser_    
+    let idUser = req.body.idUser_ 
+    let start = req.body.start
+    let end = req.body.end   
                 
-    let sql = "SELECT * FROM 3a_troco where fk_id_usuario = " + idUser + ";";
+    let sql = "SELECT SUM(valor_inclusao) \
+            FROM 3a_troco where fk_id_usuario = " + idUser + " \
+            AND data_inclusao BETWEEN '" + start + "' AND '" + end + "';";
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });
+})
+
+app.post('/getCashChange', function(req, res) {    
+    let idUser = req.body.idUser_ 
+    let start = req.body.start
+    let end = req.body.end   
+                
+    let sql = "SELECT SUM(valor_inclusao) \
+            FROM 3a_troco where fk_id_usuario = " + idUser + " \
+            AND data_inclusao BETWEEN '" + start + "' AND '" + end + "';";
     log_(sql)
 
     conLocal.query(sql, function (err1, result) {        
