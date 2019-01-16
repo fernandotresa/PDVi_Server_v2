@@ -821,6 +821,24 @@ app.post('/getAuth', function(req, res) {
     });
 });
 
+app.post('/getAuthSupervisor', function(req, res) {    
+    let email = req.body.email
+    let password = req.body.password
+                
+    let sql = "SELECT * FROM 3a_usuarios \
+        INNER JOIN 3a_nivel_acesso ON  3a_nivel_acesso.id_nivel_acesso = 3a_usuarios.fk_id_nivel_acesso \
+        where login_usuarios = '" + email + "' \
+        AND senha_usuarios_pdvi = '" + password + "' \
+        AND (3a_nivel_acesso.id_nivel_acesso = 2 OR 3a_nivel_acesso.id_nivel_acesso = 3);";
+
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });
+});
+
 app.post('/getTicketParking', function(req, res) {    
     
     let id_estoque_utilizavel = req.body.idTicket
@@ -871,6 +889,64 @@ app.post('/getTicketOperator', function(req, res) {
         res.json({"success": result}); 
     });
 });
+
+app.post('/confirmCashDrain', function(req, res) {    
+
+    let idUser = req.body.idUser
+    let idSupervisor = req.body.idSupervisor
+    let drainValue = req.body.drainValue
+                
+    let sql = "INSERT INTO 3a_sangria (fk_id_usuario, fk_id_supervisor, data_sangria, valor_sangria) \
+        VALUES (" + idUser + ", " + idSupervisor + ", NOW(), " + drainValue + ")";
+
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });
+});
+
+app.post('/confirmCashChange', function(req, res) {    
+
+    let idUser = req.body.idUser
+    let idSupervisor = req.body.idSupervisor
+    let changeValue = req.body.changeValue
+                
+    let sql = "INSERT INTO 3a_troco (fk_id_usuario, fk_id_supervisor, data_inclusao, valor_inclusao) \
+        VALUES (" + idUser + ", " + idSupervisor + ", NOW(), " + changeValue + ")";
+
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });
+});
+
+app.post('/getCashDrain', function(req, res) {    
+    let idUser = req.body.idUser_    
+                
+    let sql = "SELECT * FROM 3a_sangria where fk_id_usuario = " + idUser + ";";
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });
+})
+
+app.post('/getCashChange', function(req, res) {    
+    let idUser = req.body.idUser_    
+                
+    let sql = "SELECT * FROM 3a_troco where fk_id_usuario = " + idUser + ";";
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });
+})
 
 
 http.listen(8085);
