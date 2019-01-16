@@ -34,19 +34,19 @@ var db_config_remote = {
     database: "vendas_online"
 };
 
-/*var db_config_local = {
+var db_config_local = {
     host: "10.8.0.50",
     user: "root",
     password: "Mudaragora00",
     database: "zoosp"
-};*/
+};
 
-var db_config_local = {
+/*var db_config_local = {
     host: "10.0.2.180",
     user: "root",
     password: "Mudaragora00",
     database: "zoosp"
-};
+};*/
 
 let con;
 let conLocal;
