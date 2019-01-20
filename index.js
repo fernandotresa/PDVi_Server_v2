@@ -34,15 +34,9 @@ var db_config_remote = {
     database: "vendas_online"
 };
 
-/*var db_config_local = {
-    host: "10.8.0.50",
-    user: "root",
-    password: "Mudaragora00",
-    database: "zoosp"
-};*/
-
 var db_config_local = {
-    host: "10.0.2.180",
+    host: "10.8.0.50",
+    //host: "10.0.2.180",
     user: "root",
     password: "Mudaragora00",
     database: "zoosp"
@@ -553,15 +547,12 @@ function payProductContinue(req, product, data){
     let valor_produto = product.valor_produto        
 
     let quantity = product.quantity
-    let selectedsIds = product.selectedsIds    
+    let selectedsIds = product.selectedsIds        
 
     for(var j = 0; j < quantity; j++){
         
         let last = ++id_estoque_utilizavel
-        let idSubtypeChanged = selectedsIds[j]
-
-        if(idSubtypeChanged > 0)
-            product.fk_id_subtipo_produto = idSubtypeChanged
+        let idSubtypeChanged = selectedsIds[j]                                
                             
         let sql = "INSERT INTO 3a_estoque_utilizavel (id_estoque_utilizavel,fk_id_produto,fk_id_tipo_estoque,fk_id_usuarios_inclusao,data_inclusao_utilizavel, impresso) \
         VALUES(" + last + ", " + id_produto + ", 1," + userId + ", NOW(), 1);"                       
@@ -570,6 +561,10 @@ function payProductContinue(req, product, data){
     
         conLocal.query(sql, function (err1, result) {  
             if (err1) throw err1;  
+
+            if(idSubtypeChanged > 0){                
+                product.fk_id_subtipo_produto = idSubtypeChanged            
+            }  
 
             soldTicket(product, idPayment, last, userId)     
             
