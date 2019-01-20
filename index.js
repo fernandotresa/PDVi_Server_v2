@@ -35,8 +35,8 @@ var db_config_remote = {
 };
 
 var db_config_local = {
-    host: "10.8.0.50",
-    //host: "10.0.2.180",
+    //host: "10.8.0.50",
+    host: "10.0.2.180",
     user: "root",
     password: "Mudaragora00",
     database: "zoosp"
