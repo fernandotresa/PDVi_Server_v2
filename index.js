@@ -168,11 +168,11 @@ function printFile(tipoIngresso, valorIngresso, operador, dataHora, idTicket, to
     
     console.log(cmd)
 
-    shell.exec(cmd, {async: false}, function(code, stdout, stderr) {
+    /*shell.exec(cmd, {async: false}, function(code, stdout, stderr) {
         console.log('Exit code:', code);
         console.log('Program output:', stdout);
         console.log('Program stderr:', stderr);        
-    }); 
+    }); */
 }
 
 function sendEmail(files, emailAddr){
@@ -435,6 +435,7 @@ function createTicketDatabaseLocal(product, id_estoque_utilizavel){
 
 function soldTicket(produto, tipoPagamento, last, userId){
 
+    
     let user = userId
     let idCaixa = 1
     let obs = ""
@@ -541,8 +542,7 @@ function payParking(req, product){
 
 function payProductContinue(req, product, data){            
 
-    let id_estoque_utilizavel = data[0].TOTAL        
-    
+    let id_estoque_utilizavel = data[0].TOTAL           
     let userId = req.body.userId
     let userName = req.body.userName
     let finalValue = req.body.finalValue
@@ -553,11 +553,16 @@ function payProductContinue(req, product, data){
     let valor_produto = product.valor_produto        
 
     let quantity = product.quantity
+    let selectedsIds = product.selectedsIds    
 
     for(var j = 0; j < quantity; j++){
         
         let last = ++id_estoque_utilizavel
-        
+        let idSubtypeChanged = selectedsIds[j]
+
+        if(idSubtypeChanged > 0)
+            product.fk_id_subtipo_produto = idSubtypeChanged
+                            
         let sql = "INSERT INTO 3a_estoque_utilizavel (id_estoque_utilizavel,fk_id_produto,fk_id_tipo_estoque,fk_id_usuarios_inclusao,data_inclusao_utilizavel, impresso) \
         VALUES(" + last + ", " + id_produto + ", 1," + userId + ", NOW(), 1);"                       
 
@@ -827,7 +832,8 @@ app.post('/getSubtypesProducts', function(req, res) {
 
     log_('Totem: '+ idTotem + ' - Verificando subtipos do produto: ' + idProduct)
             
-    let sql = "SELECT * FROM 3a_subtipo_produto where fk_id_tipo_produto = " + idProduct + ";";
+    let sql = "SELECT 3a_subtipo_produto.*, 0 as quantity \
+        FROM 3a_subtipo_produto where fk_id_tipo_produto = " + idProduct + ";";
 
     //log_(sql)
 
