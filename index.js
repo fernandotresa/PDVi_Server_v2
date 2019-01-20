@@ -8,7 +8,7 @@ let cors = require('cors');
 let http = require('http').Server(app);
 var moment = require('moment');
 var qr = require('qr-image');  
-let shell = require('shelljs');
+//let shell = require('shelljs');
 
 const synctime = 10000;
 let clientName = 'Museu de Arte Sacra'
@@ -845,6 +845,7 @@ app.post('/payProducts', function(req, res) {
 app.post('/getAuth', function(req, res) {    
     let email = req.body.email
     let password = req.body.password
+    let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
                 
     let sql = "SELECT * FROM 3a_usuarios where login_usuarios = '" + email + "' \
         AND senha_usuarios_pdvi = '" + password + "';";
@@ -853,7 +854,7 @@ app.post('/getAuth', function(req, res) {
 
     conLocal.query(sql, function (err1, result) {        
         if (err1) throw err1;           
-        res.json({"success": result}); 
+        res.json({"success": result, "ip": ip}); 
     });
 });
 
