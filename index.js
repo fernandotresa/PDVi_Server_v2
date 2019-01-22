@@ -36,10 +36,11 @@ var db_config_remote = {
 
 var db_config_local = {
     //host: "10.8.0.50",
-    host: "10.0.2.180",
+    host: "10.19.31.247",
     user: "root",
     password: "Mudaragora00",
-    database: "zoosp"
+    //database: "zoosp"
+    database: "3access"
 };
 
 let con;
@@ -162,11 +163,11 @@ function printFile(tipoIngresso, valorIngresso, operador, dataHora, idTicket, to
     
     console.log(cmd)
 
-    /*shell.exec(cmd, {async: false}, function(code, stdout, stderr) {
+    shell.exec(cmd, {async: false}, function(code, stdout, stderr) {
         console.log('Exit code:', code);
         console.log('Program output:', stdout);
         console.log('Program stderr:', stderr);        
-    }); */
+    });
 }
 
 function sendEmail(files, emailAddr){
@@ -458,7 +459,7 @@ function soldTicket(produto, tipoPagamento, last, userId){
      + user + ","
      + id_produto + ","
      + fk_id_subtipo_produto + ","
-     + idCaixa + "," +
+     "(SELECT 3a_caixa_registrado.id_caixa_registrado  FROM 3a_caixa_registrado WHERE 3a_caixa_registrado.fk_id_usuario = " + userId + " ORDER BY data_caixa_registrado LIMIT 1 DESC)," +
      + valor + "," +
      "NOW(), '" 
      + obs + "', '" 
