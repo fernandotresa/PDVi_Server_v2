@@ -153,11 +153,11 @@ function printFile(tipoIngresso, valorIngresso, operador, dataHora, idTicket, to
     
     console.log("Realizando impressão do ingresso ", idTicket)
 
-    let cmd = 'sh scripts/impressao.sh "' + tipoIngresso + '" ' + valorIngresso + ' ' + operador + ' "' 
+    let cmd = 'sh impressao.sh "' + tipoIngresso + '" ' + valorIngresso + ' ' + operador + ' "' 
                 + dataHora + '" ' + idTicket + ' ' + totalVenda
     
     if(reprint === 1){
-        cmd = 'sh scripts/reimpressao.sh "' + tipoIngresso + '" ' + valorIngresso + ' ' + operador + ' "' 
+        cmd = 'sh reimpressao.sh "' + tipoIngresso + '" ' + valorIngresso + ' ' + operador + ' "' 
         + dataHora + '" ' + idTicket + ' ' + totalVenda
     }
     
