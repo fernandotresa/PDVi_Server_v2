@@ -458,8 +458,8 @@ function soldTicket(produto, tipoPagamento, last, userId){
      + id_estoque_utilizavel + "," 
      + user + ","
      + id_produto + ","
-     + fk_id_subtipo_produto + ","
-     "(SELECT 3a_caixa_registrado.id_caixa_registrado  FROM 3a_caixa_registrado WHERE 3a_caixa_registrado.fk_id_usuario = " + userId + " ORDER BY data_caixa_registrado LIMIT 1 DESC)," +
+     + fk_id_subtipo_produto +
+     ", (SELECT 3a_caixa_registrado.id_caixa_registrado  FROM 3a_caixa_registrado WHERE 3a_caixa_registrado.fk_id_usuario = " + userId + " ORDER BY data_caixa_registrado LIMIT 1 DESC)," +
      + valor + "," +
      "NOW(), '" 
      + obs + "', '" 
