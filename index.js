@@ -8,7 +8,7 @@ let cors = require('cors');
 let http = require('http').Server(app);
 var moment = require('moment');
 var qr = require('qr-image');  
-//let shell = require('shelljs');
+let shell = require('shelljs');
 
 const synctime = 10000;
 let clientName = 'Museu de Arte Sacra'
