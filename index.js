@@ -36,11 +36,12 @@ var db_config_remote = {
 
 var db_config_local = {
     //host: "10.8.0.50",
-    host: "10.19.31.247",
+    //host: "10.19.31.247",
+    host: "10.0.2.180",
     user: "root",
     password: "Mudaragora00",
     //database: "zoosp"
-    database: "3access"
+    database: "zoosp"
 };
 
 let con;
@@ -415,6 +416,7 @@ function createTicketBaseLocalContinue(data, itens, product){
 
 function createTicketDatabaseLocal(product, id_estoque_utilizavel){
 
+    // TODO: BAIXAR AQUI O ULTIMO FK_ID_CAIXA_REGISTRADO E INSERIR NO .product
     let id_produto = product.id_produto
     let userId = 1
 
@@ -429,10 +431,8 @@ function createTicketDatabaseLocal(product, id_estoque_utilizavel){
 }
 
 function soldTicket(produto, tipoPagamento, last, userId){
-
     
     let user = userId
-    let idCaixa = 1
     let obs = ""
     let ip = "localhost"
     let validade = 1
@@ -440,6 +440,7 @@ function soldTicket(produto, tipoPagamento, last, userId){
     let fk_id_subtipo_produto = produto.fk_id_subtipo_produto
     let valor = produto.valor_produto
     let id_produto = produto.id_produto
+    let fk_id_caixa_venda = produto.id_caixa_registrado
 
     let sql = "INSERT INTO 3a_log_vendas (\
         fk_id_estoque_utilizavel,\
@@ -455,12 +456,12 @@ function soldTicket(produto, tipoPagamento, last, userId){
         fk_id_tipo_pagamento,\
         fk_id_validade) \
     VALUES("
-     + id_estoque_utilizavel + "," 
-     + user + ","
-     + id_produto + ","
-     + fk_id_subtipo_produto +
-     ", (SELECT 3a_caixa_registrado.id_caixa_registrado  FROM 3a_caixa_registrado WHERE 3a_caixa_registrado.fk_id_usuario = " + userId + " ORDER BY data_caixa_registrado DESC LIMIT 1)," +
-     + valor + "," +
+     + id_estoque_utilizavel + ", " 
+     + user + ", "
+     + id_produto + ", "
+     + fk_id_subtipo_produto + ", "
+     + fk_id_caixa_venda + ", " +
+     + valor + ", " +
      "NOW(), '" 
      + obs + "', '" 
      + ip + "'," 
@@ -609,7 +610,32 @@ function confirmCashChange(req, res){
         if (err1) throw err1;           
         res.json({"success": result}); 
     });
+}
 
+function getLastCashierId(req, res){
+
+    let idUser = req.body.idUser     
+
+    let sqlCashier = "INSERT INTO 3a_caixa_registrado (fk_id_usuario, data_caixa_registrado, obs_log_venda) \
+        VALUES (" + idUser + ", NOW(), 'Gerado pelo sistema PDVi Web');"
+
+    log_(sqlCashier)        
+
+    conLocal.query(sqlCashier, function (err1, result) {        
+        if (err1) throw err1;
+
+        let sql = "SELECT 3a_caixa_registrado.id_caixa_registrado \
+            FROM 3a_caixa_registrado \
+            WHERE 3a_caixa_registrado.fk_id_usuario = " + idUser + " \
+            ORDER BY data_caixa_registrado DESC LIMIT 1"
+    
+        log_(sql)
+
+        conLocal.query(sql, function (err2, resultEnd) {        
+            if (err2) throw err2;           
+            res.json({"success": resultEnd}); 
+        });
+    });                       
 }
 
 app.post('/getAllOrders', function(req, res) {    
@@ -978,6 +1004,10 @@ app.post('/getTotalTickets', function(req, res) {
         if (err1) throw err1;           
         res.json({"success": result}); 
     });
+})
+
+app.post('/getLastCashier', function(req, res) {    
+    getLastCashierId(req, res)
 })
 
 
