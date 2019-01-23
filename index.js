@@ -10,6 +10,10 @@ var moment = require('moment');
 var qr = require('qr-image');  
 let shell = require('shelljs');
 
+var os = require('os');
+var ifaces = os.networkInterfaces();
+var ipAddressLocal = "localhost"
+
 const synctime = 10000;
 let clientName = 'Museu de Arte Sacra'
 let clientItensOnline = []
@@ -41,7 +45,7 @@ var db_config_local = {
     user: "root",
     password: "Mudaragora00",
     //database: "zoosp"
-    database: "zoosp"
+    database: "3access"
 };
 
 let con;
@@ -131,6 +135,23 @@ function startInterface(){
     }    
 
     handleDisconnectLocal();        
+    startIpAddress()    
+}
+
+function startIpAddress(){
+    Object.keys(ifaces).forEach(function (ifname) {
+      
+        ifaces[ifname].forEach(function (iface) {
+          
+          if ('IPv4' !== iface.family || iface.internal !== false)
+            return;          
+
+          ipAddressLocal = iface.address
+
+          if(ipAddressLocal.indexOf("10.8.0.") > -1)
+              return;        
+        })
+    })
 }
 
 startInterface();
@@ -871,8 +892,7 @@ app.post('/payProducts', function(req, res) {
 
 app.post('/getAuth', function(req, res) {    
     let email = req.body.email
-    let password = req.body.password
-    let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    let password = req.body.password    
                 
     let sql = "SELECT * FROM 3a_usuarios where login_usuarios = '" + email + "' \
         AND senha_usuarios_pdvi = '" + password + "';";
@@ -881,7 +901,7 @@ app.post('/getAuth', function(req, res) {
 
     conLocal.query(sql, function (err1, result) {        
         if (err1) throw err1;           
-        res.json({"success": result, "ip": ip}); 
+        res.json({"success": result, "ip": ipAddressLocal}); 
     });
 });
 
