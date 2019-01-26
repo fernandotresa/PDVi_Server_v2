@@ -659,6 +659,96 @@ function getLastCashierId(req, res){
     });                       
 }
 
+function getTicketOperator(req, res){
+
+    let idUser = req.body.idUser
+    let start = req.body.start
+    let end = req.body.end    
+
+    let sql = "SELECT *, false AS checked \
+            FROM 3a_estoque_utilizavel \
+        INNER JOIN 3a_log_vendas ON 3a_log_vendas.fk_id_estoque_utilizavel = 3a_estoque_utilizavel.id_estoque_utilizavel \
+        INNER join 3a_produto ON 3a_produto.id_produto = 3a_estoque_utilizavel.fk_id_produto \
+        INNER join 3a_subtipo_produto ON 3a_subtipo_produto.id_subtipo_produto = 3a_log_vendas.fk_id_subtipo_produto \
+        WHERE 3a_log_vendas.fk_id_usuarios = " + idUser + " \
+        AND 3a_log_vendas.data_log_venda BETWEEN '" + start + "' AND  '" + end + "' \
+        ORDER BY 3a_log_vendas.data_log_venda DESC;"
+
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });
+}
+
+function getTicketParking(req, res){
+
+    let id_estoque_utilizavel = req.body.idTicket
+                
+    let sql = "SELECT 3a_produto.nome_produto,\
+                3a_produto.prefixo_produto,\
+                3a_produto.id_produto,\
+                3a_produto.valor_produto,\
+                3a_log_vendas.data_log_venda,\
+                3a_ponto_acesso.nome_ponto_acesso,\
+                3a_produto.fk_id_subtipo_produto,\
+                3a_estoque_utilizavel.id_estoque_utilizavel,\
+                3a_estoque_utilizavel.data_inclusao_utilizavel \
+            FROM 3a_estoque_utilizavel \
+            LEFT JOIN 3a_log_vendas ON 3a_log_vendas.fk_id_estoque_utilizavel = 3a_estoque_utilizavel.id_estoque_utilizavel \
+            INNER join 3a_produto ON 3a_produto.id_produto = 3a_estoque_utilizavel.fk_id_produto \
+            INNER join 3a_ponto_acesso ON 3a_ponto_acesso.id_ponto_acesso = 3a_estoque_utilizavel.fk_id_ponto_acesso_gerado \
+            WHERE id_estoque_utilizavel = " + id_estoque_utilizavel + ";";
+
+    log_(sql)
+
+    
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });
+}
+
+function getCashDrain(req, res){
+    let idUser = req.body.idUser  
+    let start = req.body.start
+    let end = req.body.end
+                
+    let sql = "SELECT SUM(valor_sangria)  AS TOTAL \
+            FROM 3a_sangria where fk_id_usuario = " + idUser + " \
+            AND data_sangria BETWEEN '" + start + "' AND '" + end + "';";
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });
+}
+
+function getUsers(req, res){
+    let sql = "SELECT * FROM 3a_usuarios;";
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });
+}
+
+function getUsersByName(req, res){
+
+    let name = req.body.name
+
+    let sql = "SELECT * FROM 3a_usuarios WHERE login_usuarios LIKE '%" + name + "%';";
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });
+}
+
 app.post('/getAllOrders', function(req, res) {    
 
     let start = req.body.start
@@ -920,54 +1010,11 @@ app.post('/getAuthSupervisor', function(req, res) {
 });
 
 app.post('/getTicketParking', function(req, res) {    
-    
-    let id_estoque_utilizavel = req.body.idTicket
-                
-    let sql = "SELECT 3a_produto.nome_produto,\
-                3a_produto.prefixo_produto,\
-                3a_produto.id_produto,\
-                3a_produto.valor_produto,\
-                3a_log_vendas.data_log_venda,\
-                3a_ponto_acesso.nome_ponto_acesso,\
-                3a_produto.fk_id_subtipo_produto,\
-                3a_estoque_utilizavel.id_estoque_utilizavel,\
-                3a_estoque_utilizavel.data_inclusao_utilizavel \
-            FROM 3a_estoque_utilizavel \
-            LEFT JOIN 3a_log_vendas ON 3a_log_vendas.fk_id_estoque_utilizavel = 3a_estoque_utilizavel.id_estoque_utilizavel \
-            INNER join 3a_produto ON 3a_produto.id_produto = 3a_estoque_utilizavel.fk_id_produto \
-            INNER join 3a_ponto_acesso ON 3a_ponto_acesso.id_ponto_acesso = 3a_estoque_utilizavel.fk_id_ponto_acesso_gerado \
-            WHERE id_estoque_utilizavel = " + id_estoque_utilizavel + ";";
-
-    log_(sql)
-
-    
-    conLocal.query(sql, function (err1, result) {        
-        if (err1) throw err1;           
-        res.json({"success": result}); 
-    });
+    getTicketParking(req, res)    
 });
 
 app.post('/getTicketOperator', function(req, res) {
-
-    let idUser = req.body.idUser
-    let start = req.body.start
-    let end = req.body.end    
-
-    let sql = "SELECT *, false AS checked \
-            FROM 3a_estoque_utilizavel \
-        INNER JOIN 3a_log_vendas ON 3a_log_vendas.fk_id_estoque_utilizavel = 3a_estoque_utilizavel.id_estoque_utilizavel \
-        INNER join 3a_produto ON 3a_produto.id_produto = 3a_estoque_utilizavel.fk_id_produto \
-        INNER join 3a_subtipo_produto ON 3a_subtipo_produto.id_subtipo_produto = 3a_log_vendas.fk_id_subtipo_produto \
-        WHERE 3a_log_vendas.fk_id_usuarios = " + idUser + " \
-        AND 3a_log_vendas.data_log_venda BETWEEN '" + start + "' AND  '" + end + "' \
-        ORDER BY 3a_log_vendas.data_log_venda DESC;"
-
-    log_(sql)
-
-    conLocal.query(sql, function (err1, result) {        
-        if (err1) throw err1;           
-        res.json({"success": result}); 
-    });
+    getTicketOperator(req, res)    
 });
 
 app.post('/confirmCashDrain', function(req, res) {    
@@ -979,19 +1026,7 @@ app.post('/confirmCashChange', function(req, res) {
 });
 
 app.post('/getCashDrain', function(req, res) {    
-    let idUser = req.body.idUser  
-    let start = req.body.start
-    let end = req.body.end
-                
-    let sql = "SELECT SUM(valor_sangria)  AS TOTAL \
-            FROM 3a_sangria where fk_id_usuario = " + idUser + " \
-            AND data_sangria BETWEEN '" + start + "' AND '" + end + "';";
-    log_(sql)
-
-    conLocal.query(sql, function (err1, result) {        
-        if (err1) throw err1;           
-        res.json({"success": result}); 
-    });
+    getCashDrain(req, res)
 })
 
 app.post('/getCashChange', function(req, res) {    
@@ -1030,5 +1065,28 @@ app.post('/getLastCashier', function(req, res) {
     getLastCashierId(req, res)
 })
 
+app.post('/getUsers', function(req, res) {    
+    getUsers(req, res)    
+})
+
+
+app.post('/getUserByName', function(req, res) {    
+    getUsersByName(req, res)    
+})
+
+app.post('/changePasswordUser', function(req, res) {    
+    let user = req.body.user
+    let password = req.body.password    
+                
+    let sql = "UPDATE 3a_usuarios SET senha_usuarios = '" + password + "', \
+        senha_usuarios_pdvi ='" + password + "' WHERE id_usuarios = " + user.id_usuarios + ";";
+
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });
+})
 
 http.listen(8085);
