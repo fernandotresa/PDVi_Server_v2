@@ -1026,7 +1026,7 @@ app.post('/getAuthSupervisor', function(req, res) {
                 
     let sql = "SELECT * FROM 3a_usuarios \
         INNER JOIN 3a_nivel_acesso ON  3a_nivel_acesso.id_nivel_acesso = 3a_usuarios.fk_id_nivel_acesso \
-        where 3a_nivel_acesso.id_nivel_acesso = 2 OR 3a_nivel_acesso.id_nivel_acesso = 3;";
+        where 3a_nivel_acesso.id_nivel_acesso < 3;";
 
     log_(sql)
 
