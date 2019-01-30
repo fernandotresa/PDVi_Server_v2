@@ -39,9 +39,9 @@ var db_config_remote = {
 };
 
 var db_config_local = {
-    //host: "10.8.0.50",
+    host: "10.8.0.50",
     //host: "10.19.31.247",
-    host: "10.0.2.180",
+    //host: "10.0.2.180",
     user: "root",
     password: "Mudaragora00",
     database: "zoosp"
@@ -578,8 +578,6 @@ function payProductContinue(req, product, data){
         
         let last = ++id_estoque_utilizavel
         let idSubtypeChanged = selectedsIds[j]                                
-
-        console.log("### Ultimo estoque utilizavel ", last)
                             
         let sql = "INSERT INTO 3a_estoque_utilizavel (id_estoque_utilizavel,fk_id_produto,fk_id_tipo_estoque,fk_id_usuarios_inclusao,data_inclusao_utilizavel, impresso) \
         VALUES(" + last + ", " + id_produto + ", 1," + userId + ", NOW(), 1);"                       
@@ -676,6 +674,31 @@ function getTicketOperator(req, res){
         INNER join 3a_subtipo_produto ON 3a_subtipo_produto.id_subtipo_produto = 3a_log_vendas.fk_id_subtipo_produto \
         WHERE 3a_log_vendas.fk_id_usuarios = " + idUser + " \
         AND 3a_log_vendas.data_log_venda BETWEEN '" + start + "' AND  '" + end + "' \
+        ORDER BY 3a_log_vendas.data_log_venda DESC;"
+
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });
+}
+
+function getTicketOperatorStr(req, res){
+
+    let idUser = req.body.idUser
+    let start = req.body.start
+    let end = req.body.end    
+    let str = req.body.str
+
+    let sql = "SELECT *, false AS checked \
+            FROM 3a_estoque_utilizavel \
+        INNER JOIN 3a_log_vendas ON 3a_log_vendas.fk_id_estoque_utilizavel = 3a_estoque_utilizavel.id_estoque_utilizavel \
+        INNER join 3a_produto ON 3a_produto.id_produto = 3a_estoque_utilizavel.fk_id_produto \
+        INNER join 3a_subtipo_produto ON 3a_subtipo_produto.id_subtipo_produto = 3a_log_vendas.fk_id_subtipo_produto \
+        WHERE 3a_log_vendas.fk_id_usuarios = " + idUser + " \
+        AND 3a_log_vendas.data_log_venda BETWEEN '" + start + "' AND  '" + end + "' \
+        AND 3a_estoque_utilizavel.id_estoque_utilizavel = " + str + " \
         ORDER BY 3a_log_vendas.data_log_venda DESC;"
 
     log_(sql)
@@ -1019,6 +1042,10 @@ app.post('/getTicketParking', function(req, res) {
 
 app.post('/getTicketOperator', function(req, res) {
     getTicketOperator(req, res)    
+});
+
+app.post('/getTicketOperatorStr', function(req, res) {
+    getTicketOperatorStr(req, res)    
 });
 
 app.post('/confirmCashDrain', function(req, res) {    
