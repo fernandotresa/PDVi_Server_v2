@@ -16,6 +16,7 @@ var ipAddressLocal = "localhost"
 
 const synctime = 10000;
 let clientName = 'Museu de Arte Sacra'
+
 let clientItensOnline = []
 
 const nodemailer = require('nodemailer');
@@ -25,6 +26,7 @@ var emailSubject = 'Qr Code ingresso'
 var pathQRCode = './qrcodes/'
 
 var worksOnline = 1
+var idUserOnline = 1
 
 app.use(logger('dev'));
 app.use(bodyParser.json());
@@ -261,7 +263,7 @@ function getProductsClient(){
                 AND taxonomy = 'product_cat' \
                 AND name = '" + clientName + "'"; 
 
-    //log_(sql)
+    log_(sql)
 
     con.query(sql, function (err1, result) {  
         if (err1) throw err1;                          
@@ -279,6 +281,8 @@ function populateProductClientArray(data){
         object_id = data[i].object_id
         clientItensOnline.push(object_id)        
     }
+
+    console.log("Ids dos produtos do cliente: ", clientName, clientItensOnline)
 }
 
 /**
@@ -341,7 +345,35 @@ function syncDatabases(){
 function syncDatabaseContinue(data){
     
     log_("Sincronizando novas compras")
+
+    let sqlCashier = "INSERT INTO 3a_caixa_registrado (fk_id_usuario, data_caixa_registrado, obs_log_venda) \
+        VALUES (" + idUserOnline + ", NOW(), 'Gerado pelo sistema PDVi Web');"
+
+    log_(sqlCashier)        
+
+    conLocal.query(sqlCashier, function (err1, result) {        
+        if (err1) throw err1;
+
+        let sql = "SELECT 3a_caixa_registrado.id_caixa_registrado \
+            FROM 3a_caixa_registrado \
+            WHERE 3a_caixa_registrado.fk_id_usuario = " + idUserOnline + " \
+            ORDER BY data_caixa_registrado DESC LIMIT 1"
     
+        log_(sql)
+
+        conLocal.query(sql, function (err, result) {        
+            if (err) throw err;           
+
+            syncDatabaseFinish(data, result)
+        });
+    });                   
+}
+
+function syncDatabaseFinish(data, caixa){
+
+    let id_caixa_registrado = caixa[0].id_caixa_registrado
+    log_("Último caixa registrado: " + id_caixa_registrado)
+
     for (var i = 0; i < data.length; i++) {                
 
         let itens = data[i]
@@ -350,8 +382,8 @@ function syncDatabaseContinue(data){
 
         for (var k = 0; k < arr.length; k++) {
 
-            let produto = arr[k]                                                                  
-            createTicketBaseLocal(produto, itens, i)        
+            let produto = arr[k]                                                                              
+            createTicketBaseLocal(produto, itens, i, id_caixa_registrado)
         }                  
     }    
 }
@@ -359,7 +391,7 @@ function syncDatabaseContinue(data){
 /**
  * Search information about the product on local base
  */
-function createTicketBaseLocal(productName, itens, k){
+function createTicketBaseLocal(productName, itens, k, id_caixa_registrado){
 
     let sql = "SELECT * FROM 3a_produto WHERE nome_produto = '" + productName + "';";
     
@@ -373,6 +405,8 @@ function createTicketBaseLocal(productName, itens, k){
             let prefixo = product.prefixo_produto
             let prefixo_ini=prefixo*1000000;
             let prefixo_fim=prefixo_ini+999999;
+
+            product.fk_id_caixa_venda = id_caixa_registrado
         
             let sqlPrefix = "SELECT IFNULL(MAX(id_estoque_utilizavel) + 1, " + prefixo_ini + ") AS id_estoque_utilizavel \
                 FROM 3a_estoque_utilizavel \
@@ -437,12 +471,13 @@ function createTicketBaseLocalContinue(data, itens, product){
 
 function createTicketDatabaseLocal(product, id_estoque_utilizavel){
 
-    // TODO: BAIXAR AQUI O ULTIMO FK_ID_CAIXA_REGISTRADO E INSERIR NO .product
     let id_produto = product.id_produto
     let userId = 1
 
     let sql = "INSERT INTO 3a_estoque_utilizavel (id_estoque_utilizavel,fk_id_produto,fk_id_tipo_estoque,fk_id_usuarios_inclusao,data_inclusao_utilizavel, impresso) \
         VALUES(" + id_estoque_utilizavel + ", " + id_produto + ", 1," + userId + ", NOW(), 1);"                       
+
+    log_(sql)
 
     conLocal.query(sql, function (err1, result) {  
         if (err1) throw err1;  
@@ -454,14 +489,14 @@ function createTicketDatabaseLocal(product, id_estoque_utilizavel){
 function soldTicket(produto, tipoPagamento, last, userId){
     
     let user = userId
-    let obs = ""
+    let obs = "Vendido pelo sistema online"
     let ip = "localhost"
     let validade = 1
     let id_estoque_utilizavel = last
     let fk_id_subtipo_produto = produto.fk_id_subtipo_produto
     let valor = produto.valor_produto
     let id_produto = produto.id_produto
-    let fk_id_caixa_venda = produto.id_caixa_registrado
+    let fk_id_caixa_venda = produto.fk_id_caixa_venda
 
     let sql = "INSERT INTO 3a_log_vendas (\
         fk_id_estoque_utilizavel,\
@@ -817,7 +852,7 @@ app.post('/getAllOrdersByCPF', function(req, res) {
 
     let sql = "SELECT * \
         FROM 3a_vendas_online \
-        WHERE _billing_cpf = '" + name + "' \
+        WHERE _billing_cpf LIKE '%" + name + "%' \
         AND datetime BETWEEN '" + start + "' AND '" + end + "';"
 
     log_(sql)
@@ -855,10 +890,12 @@ app.post('/sendEmail', function(req, res) {
     });    
 });
 
-app.post('/printTicket', function(req, res) {        
+app.post('/printTicket', function(req, res) {    
+       
     let userName = req.body.userName
     let finalValue = req.body.finalValue        
     let ticket = req.body.ticket    
+    console.log(req.body)
 
     let nome_produto = ticket.nome_produto
     let valor_produto = ticket.valor_produto
@@ -870,6 +907,45 @@ app.post('/printTicket', function(req, res) {
 });
 
 app.post('/printTicketMultiple', function(req, res) {    
+    let tickets = req.body.tickets
+    let userName = req.body.userName
+    let reprint = req.body.reprint
+
+    for (var i = 0, len = tickets.length; i < len; ++i) {
+        
+        let ticket = tickets[i]         
+
+        let nome_produto = ticket.nome_produto
+        let valor_produto = ticket.valor_produto
+        let data_log_venda = ticket.data_log_venda
+        let fk_id_estoque_utilizavel = ticket.fk_id_estoque_utilizavel
+        let valor_log_venda = ticket.valor_log_venda
+
+        printFile(nome_produto, valor_produto, userName, data_log_venda, fk_id_estoque_utilizavel, valor_log_venda, reprint)
+    }
+    
+    res.json({"success": "true"});  
+});
+
+app.post('/printTicketOnline', function(req, res) {    
+       
+    let userName = req.body.userName
+    let finalValue = req.body.finalValue        
+    let ticket = req.body.ticket    
+    console.log(req.body)
+
+    let nome_produto = ticket.nome_produto
+    let valor_produto = ticket.valor_produto
+    let data_log_venda = ticket.data_log_venda
+    let fk_id_estoque_utilizavel = ticket.fk_id_estoque_utilizavel
+    
+    printFile(nome_produto, valor_produto, userName, data_log_venda, fk_id_estoque_utilizavel, finalValue, 0)
+    res.json({"success": "true"});  
+});
+
+app.post('/printTicketMultipleOnline', function(req, res) {    
+    console.log(req.body)
+    
     let tickets = req.body.tickets
     let userName = req.body.userName
     let reprint = req.body.reprint
@@ -1014,7 +1090,7 @@ app.post('/getAuth', function(req, res) {
     let sql = "SELECT * FROM 3a_usuarios where login_usuarios = '" + email + "' \
         AND senha_usuarios_pdvi = '" + password + "';";
 
-    //log_(sql)
+    log_(sql)
 
     conLocal.query(sql, function (err1, result) {        
         if (err1) throw err1;           
@@ -1026,7 +1102,7 @@ app.post('/getAuthSupervisor', function(req, res) {
                 
     let sql = "SELECT * FROM 3a_usuarios \
         INNER JOIN 3a_nivel_acesso ON  3a_nivel_acesso.id_nivel_acesso = 3a_usuarios.fk_id_nivel_acesso \
-        where 3a_nivel_acesso.id_nivel_acesso < 3;";
+        where 3a_nivel_acesso.id_nivel_acesso <= 3;";
 
     log_(sql)
 
