@@ -7,6 +7,7 @@ let methodOverride = require('method-override')
 let cors = require('cors');
 let http = require('http').Server(app);
 var moment = require('moment');
+var momenttz = require('moment-timezone');
 var qr = require('qr-image');  
 let shell = require('shelljs');
 
@@ -626,9 +627,7 @@ function payProductContinue(req, product, data){
     }
 }
 
-function soldAndPrint(req, product, last){
-    
-    console.log(product, last)
+function soldAndPrint(req, product, last){        
 
     let userId = req.body.userId
     let userName = req.body.userName
@@ -636,7 +635,7 @@ function soldAndPrint(req, product, last){
     let idPayment = req.body.idPayment
     let nome_produto = product.nome_produto        
     let valor_produto = product.valor_produto        
-    let data_log_venda = last
+    let data_log_venda = momenttz().tz('America/Sao_Paulo').format("L")
 
     soldTicket(product, idPayment, last, userId)                 
     
