@@ -25,7 +25,7 @@ var emailFrom = 'myrestaurantwebapp@gmail.com'
 var emailSubject = 'Qr Code ingresso'
 var pathQRCode = './qrcodes/'
 
-var worksOnline = 1
+var worksOnline = 0
 var idUserOnline = 1
 
 app.use(logger('dev'));
@@ -41,13 +41,13 @@ var db_config_remote = {
 };
 
 var db_config_local = {
-    host: "10.8.0.50",
-    //host: "10.19.31.247",
+    //host: "10.8.0.50",
+    host: "10.19.31.247",
     //host: "10.0.2.180",
     user: "root",
     password: "Mudaragora00",
-    database: "zoosp"
-    //database: "3access"
+    //database: "zoosp"
+    database: "3access"
 };
 
 let con;
