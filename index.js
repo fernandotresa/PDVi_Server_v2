@@ -636,7 +636,7 @@ function soldAndPrint(req, product){
     let idPayment = req.body.idPayment
     let nome_produto = product.nome_produto        
     let valor_produto = product.valor_produto        
-    let data_log_venda = ticket.data_log_venda
+    let data_log_venda = product.data_log_venda
 
     soldTicket(product, idPayment, last, userId)                 
     
