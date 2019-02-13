@@ -523,12 +523,12 @@ function soldTicket(produto, tipoPagamento, last, userId){
      + ip + "'," 
      + "'PDVi',"
      + "(SELECT 3a_tipo_pagamento.id_tipo_pagamento FROM 3a_tipo_pagamento WHERE 3a_tipo_pagamento.nome_tipo_pagamento = '" + tipoPagamento + "'),"
-     + validade + ");"
+     + validade + ");"    
 
-    log_(sql)
+    conLocal.query(sql, function (err2, result2) {          
+        if (err2) throw err2;                       
 
-    conLocal.query(sql, function (err2, result2) {  
-        if (err2) throw err2;                                             
+        log_(sql)
     });
 }
 
@@ -544,21 +544,24 @@ function updateTicketsSyncIds(id_order){
 
 function payProduct(req, res){
 
-    let products = req.body.products
-    console.log(products)
+    let products = req.body.products    
+    var productsCount = 0;
 
     for (var i = 0, len = products.length; i < len; i++) {
         
         let product = products[i]
         let isParking = product.parking
+        productsCount++
 
         if(isParking)
             payParking(req, product)
         else
-            payProductNormal(req, product)                    
-    }          
-
-    res.json({"success": 1});  
+            payProductNormal(req, product)    
+            
+        if(productsCount == products.length){
+            res.json({"success": 1});  
+        }
+    }              
 }
 
 function payProductNormal(req, product){
@@ -571,12 +574,12 @@ function payProductNormal(req, product){
         FROM 3a_estoque_utilizavel \
         WHERE id_estoque_utilizavel \
         BETWEEN " + prefixo_ini + " \
-        AND " + prefixo_fim + ";"        
-
-    log_(sql)    
+        AND " + prefixo_fim + ";"               
 
     conLocal.query(sql, function (err1, result) {  
-        if (err1) throw err1;                                                
+        if (err1) throw err1;            
+
+        log_(sql) 
         payProductContinue(req, product, result)
     });
 }
@@ -588,7 +591,7 @@ function payParking(req, product){
     let quantity = product.quantity
     let last = product.id_estoque_utilizavel
 
-    for(var j = 0; j < quantity; j++){        
+    for(var j = 0; j < quantity; j++){               
         soldTicket(product, idPayment, last, userId)         
     }    
 }
@@ -596,44 +599,49 @@ function payParking(req, product){
 function payProductContinue(req, product, data){            
 
     let id_estoque_utilizavel = data[0].TOTAL           
-    let userId = req.body.userId
-    let userName = req.body.userName
-    let finalValue = req.body.finalValue
-    let idPayment = req.body.idPayment
-
-    let id_produto = product.id_produto        
-    let nome_produto = product.nome_produto        
-    let valor_produto = product.valor_produto        
-
+    let userId = req.body.userId    
+    let id_produto = product.id_produto            
     let quantity = product.quantity
     let selectedsIds = product.selectedsIds        
 
     for(var j = 0; j < quantity; j++){
-        
-        
+                
         let last = ++id_estoque_utilizavel
         let idSubtypeChanged = selectedsIds[j]                                
+        product.id_estoque_utilizavel = last
                             
         let sql = "INSERT INTO 3a_estoque_utilizavel (id_estoque_utilizavel,fk_id_produto,fk_id_tipo_estoque,fk_id_usuarios_inclusao,data_inclusao_utilizavel, impresso) \
-        VALUES(" + last + ", " + id_produto + ", 1," + userId + ", NOW(), 1);"                       
-
-        log_(sql)   
+        VALUES(" + last + ", " + id_produto + ", 1," + userId + ", NOW(), 1);"                               
     
         conLocal.query(sql, function (err1, result) {  
             if (err1) throw err1;  
 
-            if(idSubtypeChanged > 0){                
-                product.fk_id_subtipo_produto = idSubtypeChanged            
-            }  
+            log_(sql)   
 
-            soldTicket(product, idPayment, last, userId)     
-            
-            let date = new Date()
-            let now = moment(date).format("DD.MM.YYYY kk:mm")       
-            
-            printFile(nome_produto, valor_produto, userName, now, last, finalValue, 0)
+            if(idSubtypeChanged > 0)   
+                product.fk_id_subtipo_produto = idSubtypeChanged                    
+         
+            soldAndPrint(req, product)
         });    
     }
+}
+
+function soldAndPrint(req, product){
+    
+    let last = product.id_estoque_utilizavel
+    let userId = req.body.userId
+    let userName = req.body.userName
+    let finalValue = req.body.finalValue
+    let idPayment = req.body.idPayment
+    let nome_produto = product.nome_produto        
+    let valor_produto = product.valor_produto        
+
+    soldTicket(product, idPayment, last, userId)     
+            
+    let date = new Date()
+    let now = moment(date).format("DD.MM.YYYY kk:mm")       
+    
+    printFile(nome_produto, valor_produto, userName, now, last, finalValue, 0)
 }
 
 function confirmCashDrain(req, res){
@@ -705,6 +713,7 @@ function getTicketOperator(req, res){
     let sql = "SELECT *, false AS checked \
             FROM 3a_estoque_utilizavel \
         INNER JOIN 3a_log_vendas ON 3a_log_vendas.fk_id_estoque_utilizavel = 3a_estoque_utilizavel.id_estoque_utilizavel \
+        INNER JOIN 3a_caixa_registrado ON 3a_caixa_registrado.id_caixa_registrado = 3a_log_vendas.fk_id_caixa_registrado \
         INNER join 3a_produto ON 3a_produto.id_produto = 3a_estoque_utilizavel.fk_id_produto \
         INNER join 3a_subtipo_produto ON 3a_subtipo_produto.id_subtipo_produto = 3a_log_vendas.fk_id_subtipo_produto \
         WHERE 3a_log_vendas.fk_id_usuarios = " + idUser + " \
@@ -729,12 +738,34 @@ function getTicketOperatorStr(req, res){
     let sql = "SELECT *, false AS checked \
             FROM 3a_estoque_utilizavel \
         INNER JOIN 3a_log_vendas ON 3a_log_vendas.fk_id_estoque_utilizavel = 3a_estoque_utilizavel.id_estoque_utilizavel \
+        INNER JOIN 3a_caixa_registrado ON 3a_caixa_registrado.id_caixa_registrado = 3a_log_vendas.fk_id_caixa_registrado \
         INNER join 3a_produto ON 3a_produto.id_produto = 3a_estoque_utilizavel.fk_id_produto \
         INNER join 3a_subtipo_produto ON 3a_subtipo_produto.id_subtipo_produto = 3a_log_vendas.fk_id_subtipo_produto \
         WHERE 3a_log_vendas.fk_id_usuarios = " + idUser + " \
         AND 3a_log_vendas.data_log_venda BETWEEN '" + start + "' AND  '" + end + "' \
         AND 3a_estoque_utilizavel.id_estoque_utilizavel = " + str + " \
         ORDER BY 3a_log_vendas.data_log_venda DESC;"
+
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });
+}
+
+function getTicketsCashier(req, res){
+
+    let idCashier = req.body.idCashier    
+
+    let sql = "SELECT *, false AS checked \
+            FROM 3a_estoque_utilizavel \
+        INNER JOIN 3a_log_vendas ON 3a_log_vendas.fk_id_estoque_utilizavel = 3a_estoque_utilizavel.id_estoque_utilizavel \
+        INNER JOIN 3a_caixa_registrado ON 3a_caixa_registrado.id_caixa_registrado = 3a_log_vendas.fk_id_caixa_registrado \
+        INNER join 3a_produto ON 3a_produto.id_produto = 3a_estoque_utilizavel.fk_id_produto \
+        INNER join 3a_subtipo_produto ON 3a_subtipo_produto.id_subtipo_produto = 3a_log_vendas.fk_id_subtipo_produto \
+        WHERE 3a_caixa_registrado.id_caixa_registrado = " + idCashier + " \
+        ORDER BY 3a_estoque_utilizavel.id_estoque_utilizavel DESC;"
 
     log_(sql)
 
@@ -932,7 +963,6 @@ app.post('/printTicketOnline', function(req, res) {
     let userName = req.body.userName
     let finalValue = req.body.finalValue        
     let ticket = req.body.ticket    
-    console.log(req.body)
 
     let nome_produto = ticket.nome_produto
     let valor_produto = ticket.valor_produto
@@ -944,7 +974,6 @@ app.post('/printTicketOnline', function(req, res) {
 });
 
 app.post('/printTicketMultipleOnline', function(req, res) {    
-    console.log(req.body)
     
     let tickets = req.body.tickets
     let userName = req.body.userName
@@ -1124,6 +1153,10 @@ app.post('/getTicketOperatorStr', function(req, res) {
     getTicketOperatorStr(req, res)    
 });
 
+app.post('/getTicketsCashier', function(req, res) {
+    getTicketsCashier(req, res)    
+});
+
 app.post('/confirmCashDrain', function(req, res) {    
     confirmCashDrain(req, res)
 });
@@ -1175,7 +1208,6 @@ app.post('/getLastCashier', function(req, res) {
 app.post('/getUsers', function(req, res) {    
     getUsers(req, res)    
 })
-
 
 app.post('/getUserByName', function(req, res) {    
     getUsersByName(req, res)    
