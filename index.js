@@ -608,8 +608,7 @@ function payProductContinue(req, product, data){
     for(var j = 0; j < quantity; j++){
                 
         let last = ++id_estoque_utilizavel
-        let idSubtypeChanged = selectedsIds[j]                                
-        product.id_estoque_utilizavel = last
+        let idSubtypeChanged = selectedsIds[j]                                        
                             
         let sql = "INSERT INTO 3a_estoque_utilizavel (id_estoque_utilizavel,fk_id_produto,fk_id_tipo_estoque,fk_id_usuarios_inclusao,data_inclusao_utilizavel, impresso) \
         VALUES(" + last + ", " + id_produto + ", 1," + userId + ", NOW(), 1);"                               
@@ -622,12 +621,14 @@ function payProductContinue(req, product, data){
             if(idSubtypeChanged > 0)   
                 product.fk_id_subtipo_produto = idSubtypeChanged                    
          
-            soldAndPrint(req, product)
+            soldAndPrint(req, product, last)
         });    
     }
 }
 
-function soldAndPrint(req, product){
+function soldAndPrint(req, product, last){
+    
+    console.log(product, last)
     
     let last = product.id_estoque_utilizavel
     let userId = req.body.userId
@@ -636,7 +637,7 @@ function soldAndPrint(req, product){
     let idPayment = req.body.idPayment
     let nome_produto = product.nome_produto        
     let valor_produto = product.valor_produto        
-    let data_log_venda = product.data_log_venda
+    let data_log_venda = last
 
     soldTicket(product, idPayment, last, userId)                 
     
