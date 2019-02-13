@@ -629,8 +629,7 @@ function payProductContinue(req, product, data){
 function soldAndPrint(req, product, last){
     
     console.log(product, last)
-    
-    let last = product.id_estoque_utilizavel
+
     let userId = req.body.userId
     let userName = req.body.userName
     let finalValue = req.body.finalValue
