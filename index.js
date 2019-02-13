@@ -41,8 +41,9 @@ var db_config_remote = {
 };
 
 var db_config_local = {
+    host: "10.8.0.46",
     //host: "10.8.0.50",
-    host: "10.19.31.247",
+    //host: "10.19.31.247",
     //host: "10.0.2.180",
     user: "root",
     password: "Mudaragora00",
@@ -635,13 +636,11 @@ function soldAndPrint(req, product){
     let idPayment = req.body.idPayment
     let nome_produto = product.nome_produto        
     let valor_produto = product.valor_produto        
+    let data_log_venda = ticket.data_log_venda
 
-    soldTicket(product, idPayment, last, userId)     
-            
-    let date = new Date()
-    let now = moment(date).format("DD.MM.YYYY kk:mm")       
+    soldTicket(product, idPayment, last, userId)                 
     
-    printFile(nome_produto, valor_produto, userName, now, last, finalValue, 0)
+    printFile(nome_produto, valor_produto, userName, data_log_venda, last, finalValue, 0)
 }
 
 function confirmCashDrain(req, res){
@@ -926,7 +925,6 @@ app.post('/printTicket', function(req, res) {
     let userName = req.body.userName
     let finalValue = req.body.finalValue        
     let ticket = req.body.ticket    
-    console.log(req.body)
 
     let nome_produto = ticket.nome_produto
     let valor_produto = ticket.valor_produto
