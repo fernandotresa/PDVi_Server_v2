@@ -635,7 +635,7 @@ function soldAndPrint(req, product, last){
     let idPayment = req.body.idPayment
     let nome_produto = product.nome_produto        
     let valor_produto = product.valor_produto        
-    let data_log_venda = momenttz().tz('America/Sao_Paulo').format("L")
+    let data_log_venda = momenttz().tz('America/Sao_Paulo').format("DD.MM.YYYY")
 
     soldTicket(product, idPayment, last, userId)                 
     
