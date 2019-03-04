@@ -637,9 +637,49 @@ function soldAndPrint(req, product, last){
     let valor_produto = product.valor_produto        
     let data_log_venda = momenttz().tz('America/Sao_Paulo').format("DD.MM.YYYY hh:mm:ss")
 
-    soldTicket(product, idPayment, last, userId)                 
-    
-    printFile(nome_produto, valor_produto, userName, data_log_venda, last, finalValue, 0)
+    let user = userId
+    let obs = "Vendido pelo sistema online"
+    let ip = "localhost"
+    let validade = 1
+    let id_estoque_utilizavel = last
+    let fk_id_subtipo_produto = produto.fk_id_subtipo_produto
+    let valor = produto.valor_produto
+    let id_produto = produto.id_produto
+    let fk_id_caixa_venda = produto.fk_id_caixa_venda
+
+    let sql = "INSERT INTO 3a_log_vendas (\
+        fk_id_estoque_utilizavel,\
+        fk_id_usuarios,\
+        fk_id_produto,\
+        fk_id_subtipo_produto,\
+        fk_id_caixa_registrado,\
+        valor_log_venda,\
+        data_log_venda,\
+        obs_log_venda,\
+        ip_maquina_venda,\
+        nome_maquina_venda,\
+        fk_id_tipo_pagamento,\
+        fk_id_validade) \
+    VALUES("
+     + id_estoque_utilizavel + ", " 
+     + user + ", "
+     + id_produto + ", "
+     + fk_id_subtipo_produto + ", "
+     + fk_id_caixa_venda + ", " +
+     + valor + ", " +
+     "NOW(), '" 
+     + obs + "', '" 
+     + ip + "'," 
+     + "'PDVi',"
+     + "(SELECT 3a_tipo_pagamento.id_tipo_pagamento FROM 3a_tipo_pagamento WHERE 3a_tipo_pagamento.nome_tipo_pagamento = '" + idPayment + "'),"
+     + validade + ");"    
+
+    conLocal.query(sql, function (err, result) {          
+        if (err) throw err;                       
+
+        log_(sql)
+        printFile(nome_produto, valor_produto, userName, data_log_venda, last, finalValue, 0)
+    });        
 }
 
 function confirmCashDrain(req, res){
