@@ -673,10 +673,11 @@ function soldAndPrint(req, product, last){
      + "(SELECT 3a_tipo_pagamento.id_tipo_pagamento FROM 3a_tipo_pagamento WHERE 3a_tipo_pagamento.nome_tipo_pagamento = '" + idPayment + "'),"
      + validade + ");"    
 
+     log_(sql)
+     
     conLocal.query(sql, function (err, result) {          
         if (err) throw err;                       
 
-        log_(sql)
         printFile(nome_produto, valor_produto, userName, data_log_venda, last, finalValue, 0)
     });        
 }
