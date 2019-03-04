@@ -646,6 +646,8 @@ function soldAndPrint(req, product, last){
     let id_produto = product.id_produto
     let fk_id_caixa_venda = product.fk_id_caixa_venda
 
+    console.log(product)
+
     let sql = "INSERT INTO 3a_log_vendas (\
         fk_id_estoque_utilizavel,\
         fk_id_usuarios,\
