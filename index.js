@@ -642,10 +642,9 @@ function soldAndPrint(req, product, last){
     let ip = "localhost"
     let validade = 1
     let id_estoque_utilizavel = last
-    let fk_id_subtipo_produto = produto.fk_id_subtipo_produto
-    let valor = produto.valor_produto
-    let id_produto = produto.id_produto
-    let fk_id_caixa_venda = produto.fk_id_caixa_venda
+    let fk_id_subtipo_produto = product.fk_id_subtipo_produto
+    let id_produto = product.id_produto
+    let fk_id_caixa_venda = product.fk_id_caixa_venda
 
     let sql = "INSERT INTO 3a_log_vendas (\
         fk_id_estoque_utilizavel,\
@@ -666,7 +665,7 @@ function soldAndPrint(req, product, last){
      + id_produto + ", "
      + fk_id_subtipo_produto + ", "
      + fk_id_caixa_venda + ", " +
-     + valor + ", " +
+     + valor_produto + ", " +
      "NOW(), '" 
      + obs + "', '" 
      + ip + "'," 
