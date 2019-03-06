@@ -644,7 +644,11 @@ function soldAndPrint(req, product, last){
     let id_estoque_utilizavel = last
     let fk_id_subtipo_produto = product.fk_id_subtipo_produto
     let id_produto = product.id_produto
-    let fk_id_caixa_venda = product.id_caixa_registrado
+    let fk_id_caixa_venda = product.id_caixa_registrado    
+
+    if(fk_id_caixa_venda === undefined)
+        fk_id_caixa_venda = product.fk_id_caixa_venda
+
 
     console.log(product)
 
