@@ -552,6 +552,9 @@ function payProduct(req, res){
     for (var i = 0, len = products.length; i < len; i++) {
         
         let product = products[i]
+        product.error = false
+        product.errorIdEstoqueUtilizavel = []
+
         let isParking = product.parking
         productsCount++
 
@@ -683,10 +686,13 @@ function soldAndPrint(req, product, last){
     conLocal.query(sql, function (err, result) {          
         if (err){
             product.error = true   
-            product.errorDatetime = moment().now().format()
-            product.message = "Falha ao vender ingresso: " + id_estoque_utilizavel         
+            product.errorIdEstoqueUtilizavel.push(id_estoque_utilizavel)
         }
         else {
+            // TESTE 
+            product.error = true   
+            product.errorIdEstoqueUtilizavel.push(id_estoque_utilizavel)
+
             product.id_estoque_utilizavel = id_estoque_utilizavel
             checkTicketSold(product)
         }                           
@@ -715,9 +721,8 @@ function checkTicketSold(product){
             printFile(nome_produto, valor_produto, userName, data_log_venda, id_estoque_utilizavel, finalValue, 0)
 
         else {
-            product.error = true
-            product.errorDatetime = moment().now().format()
-            product.message = "Ingresso não disponível no sistema: " + id_estoque_utilizavel
+            product.error = true   
+            product.errorIdEstoqueUtilizavel.push(id_estoque_utilizavel)
         }            
     }); 
 }
