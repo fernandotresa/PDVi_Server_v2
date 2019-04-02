@@ -19,6 +19,7 @@ const synctime = 10000;
 let clientName = 'Museu de Arte Sacra'
 
 let clientItensOnline = []
+let errorOnSelling = []
 
 const nodemailer = require('nodemailer');
 var msgEmail = 'Olá! Obrigado por adquirir o ingresso. Segue em anexo o qrcode. <strong>https://www.megaticket.com.br</strong>'
@@ -548,26 +549,21 @@ function payProduct(req, res){
 
     let products = req.body.products    
     var productsCount = 0;  
-    let callback = []
+    errorOnSelling = []
 
     for (var i = 0, len = products.length; i < len; i++) {
         
         let product = products[i]        
         let isParking = product.parking
         productsCount++
-
-        product.error = false
-        product.errorIdEstoqueUtilizavel = []
     
         if(isParking)
             payParking(req, product)
         else
             payProductNormal(req, product)    
             
-        callback.push(product)
-
         if(productsCount == products.length){
-            res.json({"success": 1, "data": callback});  
+            res.json({"success": 1, "errorOnSelling": errorOnSelling});  
         }
     }              
 }
@@ -688,16 +684,14 @@ function soldAndPrint(req, product, last){
      
     conLocal.query(sql, function (err, result) {          
         if (err){
-            product.error = true   
-            product.errorIdEstoqueUtilizavel.push(id_estoque_utilizavel)
+            errorOnSelling.push(id_estoque_utilizavel)
         }
         else {
             // TESTE 
 
-            console.log("Adicionando a lista de erros", id_estoque_utilizavel)
+            console.log("########## Adicionando a lista de erros", id_estoque_utilizavel)
 
-            product.error = true   
-            product.errorIdEstoqueUtilizavel.push(id_estoque_utilizavel)
+            errorOnSelling.push(id_estoque_utilizavel)
 
             product.id_estoque_utilizavel = id_estoque_utilizavel
             checkTicketSold(product)
@@ -727,8 +721,7 @@ function checkTicketSold(product){
             printFile(nome_produto, valor_produto, userName, data_log_venda, id_estoque_utilizavel, finalValue, 0)
 
         else {
-            product.error = true   
-            product.errorIdEstoqueUtilizavel.push(id_estoque_utilizavel)
+            errorOnSelling.push(id_estoque_utilizavel)
         }            
     }); 
 }
