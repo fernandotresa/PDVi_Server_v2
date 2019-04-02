@@ -649,9 +649,6 @@ function soldAndPrint(req, product, last){
     if(fk_id_caixa_venda === undefined)
         fk_id_caixa_venda = product.fk_id_caixa_venda
 
-
-    console.log(product)
-
     let sql = "INSERT INTO 3a_log_vendas (\
         fk_id_estoque_utilizavel,\
         fk_id_usuarios,\
@@ -682,10 +679,29 @@ function soldAndPrint(req, product, last){
      log_(sql)
      
     conLocal.query(sql, function (err, result) {          
-        if (err) throw err;                       
+        if (err) throw err;                   
 
-        printFile(nome_produto, valor_produto, userName, data_log_venda, last, finalValue, 0)
+        checkTicketSold(nome_produto, valor_produto, userName, data_log_venda, id_estoque_utilizavel, finalValue)
     });        
+}
+
+
+function checkTicketSold(nome_produto, valor_produto, userName, data_log_venda, id_estoque_utilizavel, finalValue){
+
+    let sql = "SELECT fk_id_estoque_utilizavel FROM 3a_log_vendas WHERE fk_id_estoque_utilizavel = " + id_estoque_utilizavel + " ORDER BY fk_id_estoque_utilizavel LIMIT 1;"
+    log_(sql)
+
+
+    conLocal.query(sql, function (err, result) {          
+        if (err) {
+            if (err) throw err;        
+        }
+        
+        if(result.length > 0)
+            printFile(nome_produto, valor_produto, userName, data_log_venda, id_estoque_utilizavel, finalValue, 0)
+        else
+            console.log("Ingresso não disponível no sistema!!!", id_estoque_utilizavel)    
+    }); 
 }
 
 function confirmCashDrain(req, res){
