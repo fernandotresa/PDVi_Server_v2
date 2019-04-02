@@ -638,7 +638,6 @@ function soldAndPrint(req, product, last){
 
     product.userName = userName
     product.finalValue = finalValue    
-    product.id_estoque_utilizavel = last
 
     let user = userId
     let obs = "Vendido pelo sistema online"
@@ -688,6 +687,7 @@ function soldAndPrint(req, product, last){
             product.message = "Falha ao vender ingresso: " + id_estoque_utilizavel         
         }
         else {
+            product.id_estoque_utilizavel = id_estoque_utilizavel
             checkTicketSold(product)
         }                           
     });        
@@ -713,6 +713,7 @@ function checkTicketSold(product){
         
         if(result.length > 0)
             printFile(nome_produto, valor_produto, userName, data_log_venda, id_estoque_utilizavel, finalValue, 0)
+
         else {
             product.error = true
             product.errorDatetime = moment().now().format()
