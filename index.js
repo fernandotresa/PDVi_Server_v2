@@ -558,7 +558,6 @@ function payProduct(req, res){
 
             let product = products[i]        
             let isParking = product.parking
-            productsCount++
         
             if(isParking)
                 payParking(req, product)
