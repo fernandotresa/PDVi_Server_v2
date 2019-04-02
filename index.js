@@ -548,24 +548,28 @@ function updateTicketsSyncIds(id_order){
 function payProduct(req, res){
 
     let products = req.body.products    
-    var productsCount = 0;  
+
     errorOnSelling = []
+    var promiseArray = [];
 
     for (var i = 0, len = products.length; i < len; i++) {
         
-        let product = products[i]        
-        let isParking = product.parking
-        productsCount++
+        promiseArray.push(new Promise((resolve, reject) => {
+
+            let product = products[i]        
+            let isParking = product.parking
+            productsCount++
+        
+            if(isParking)
+                payParking(req, product)
+            else
+                payProductNormal(req, product)       
+                
+            resolve(true)
+        }))         
+    }
     
-        if(isParking)
-            payParking(req, product)
-        else
-            payProductNormal(req, product)    
-            
-        if(productsCount == products.length){
-            res.json({"success": 1, "errorOnSelling": errorOnSelling});  
-        }
-    }              
+    res.json(awaitPromise.all(promiseArray) ); 
 }
 
 function payProductNormal(req, product){
