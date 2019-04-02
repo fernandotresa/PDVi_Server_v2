@@ -561,7 +561,7 @@ function payProduct(req, res){
             payProductNormal(req, product)    
             
         if(productsCount == products.length){
-            res.json({"success": 1});  
+            res.json({"success": 1, "data": products});  
         }
     }              
 }
@@ -633,9 +633,12 @@ function soldAndPrint(req, product, last){
     let userName = req.body.userName
     let finalValue = req.body.finalValue
     let idPayment = req.body.idPayment
-    let nome_produto = product.nome_produto        
-    let valor_produto = product.valor_produto        
-    let data_log_venda = momenttz().tz('America/Sao_Paulo').format("DD.MM.YYYY hh:mm:ss")
+    
+    let valor_produto = product.valor_produto            
+
+    product.userName = userName
+    product.finalValue = finalValue    
+    product.id_estoque_utilizavel = last
 
     let user = userId
     let obs = "Vendido pelo sistema online"
@@ -679,19 +682,30 @@ function soldAndPrint(req, product, last){
      log_(sql)
      
     conLocal.query(sql, function (err, result) {          
-        if (err) throw err;                   
-
-        checkTicketSold(nome_produto, valor_produto, userName, data_log_venda, id_estoque_utilizavel, finalValue)
+        if (err){
+            product.error = true   
+            product.errorDatetime = moment().now().format()
+            product.message = "Falha ao vender ingresso: " + id_estoque_utilizavel         
+        }
+        else {
+            checkTicketSold(product)
+        }                           
     });        
 }
 
 
-function checkTicketSold(nome_produto, valor_produto, userName, data_log_venda, id_estoque_utilizavel, finalValue){
-
+function checkTicketSold(product){
+    
+    let id_estoque_utilizavel = product.id_estoque_utilizavel
+    let nome_produto = product.nome_produto        
+    let data_log_venda = momenttz().tz('America/Sao_Paulo').format("DD.MM.YYYY hh:mm:ss")
+    let valor_produto = product.valor_produto  
+    let userName = product.userName
+    let finalValue = product.finalValue
+    
     let sql = "SELECT fk_id_estoque_utilizavel FROM 3a_log_vendas WHERE fk_id_estoque_utilizavel = " + id_estoque_utilizavel + " ORDER BY fk_id_estoque_utilizavel LIMIT 1;"
+
     log_(sql)
-
-
     conLocal.query(sql, function (err, result) {          
         if (err) {
             if (err) throw err;        
@@ -699,8 +713,11 @@ function checkTicketSold(nome_produto, valor_produto, userName, data_log_venda, 
         
         if(result.length > 0)
             printFile(nome_produto, valor_produto, userName, data_log_venda, id_estoque_utilizavel, finalValue, 0)
-        else
-            console.log("Ingresso não disponível no sistema!!!", id_estoque_utilizavel)    
+        else {
+            product.error = true
+            product.errorDatetime = moment().now().format()
+            product.message = "Ingresso não disponível no sistema: " + id_estoque_utilizavel
+        }            
     }); 
 }
 
