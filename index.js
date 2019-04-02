@@ -568,7 +568,7 @@ function payProduct(req, res){
         }))         
     }
     
-    res.json(awaitPromise.all(promiseArray) ); 
+    res.json(await Promise.all(promiseArray) ); 
 }
 
 function payProductNormal(req, product){
