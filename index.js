@@ -547,24 +547,27 @@ function updateTicketsSyncIds(id_order){
 function payProduct(req, res){
 
     let products = req.body.products    
-    var productsCount = 0;
+    var productsCount = 0;  
+    let callback = []
 
     for (var i = 0, len = products.length; i < len; i++) {
         
-        let product = products[i]
-        product.error = false
-        product.errorIdEstoqueUtilizavel = []
-
+        let product = products[i]        
         let isParking = product.parking
         productsCount++
 
+        product.error = false
+        product.errorIdEstoqueUtilizavel = []
+    
         if(isParking)
             payParking(req, product)
         else
             payProductNormal(req, product)    
             
+        callback.push(product)
+
         if(productsCount == products.length){
-            res.json({"success": 1, "data": products});  
+            res.json({"success": 1, "data": callback});  
         }
     }              
 }
@@ -690,6 +693,9 @@ function soldAndPrint(req, product, last){
         }
         else {
             // TESTE 
+
+            console.log("Adicionando a lista de erros", id_estoque_utilizavel)
+
             product.error = true   
             product.errorIdEstoqueUtilizavel.push(id_estoque_utilizavel)
 
