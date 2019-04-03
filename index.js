@@ -44,9 +44,9 @@ var db_config_remote = {
 
 var db_config_local = {
     //host: "10.8.0.46",
-    //host: "10.8.0.50",
+    host: "10.8.0.102",
     //host: "10.19.31.247",
-    host: "10.0.2.180",
+    //host: "10.0.2.180",
     user: "root",
     password: "Mudaragora00",
     database: "zoosp"
@@ -545,7 +545,7 @@ function updateTicketsSyncIds(id_order){
     });    
 }
 
-function payProduct(req, res){
+async function payProduct(req, res){
 
     let products = req.body.products    
 
@@ -564,31 +564,38 @@ function payProduct(req, res){
             else
                 payProductNormal(req, product)       
                 
-            resolve(true)
-        }))         
+            resolve({"success": product})
+        })
+      )         
     }
     
     res.json(await Promise.all(promiseArray) ); 
 }
 
-function payProductNormal(req, product){
+async function payProductNormal(req, product){
 
-    let prefixo = product.prefixo_produto
-    let prefixo_ini=prefixo*1000000;
-    let prefixo_fim=prefixo_ini+999999;
-    
-    let sql = "SELECT IFNULL(MAX(id_estoque_utilizavel), " + prefixo_ini + ") AS TOTAL \
-        FROM 3a_estoque_utilizavel \
-        WHERE id_estoque_utilizavel \
-        BETWEEN " + prefixo_ini + " \
-        AND " + prefixo_fim + ";"               
+    let promise = new Promise((resolve, reject) => {
 
-    conLocal.query(sql, function (err1, result) {  
-        if (err1) throw err1;            
+        let prefixo = product.prefixo_produto
+        let prefixo_ini=prefixo*1000000;
+        let prefixo_fim=prefixo_ini+999999;
+        
+        let sql = "SELECT IFNULL(MAX(id_estoque_utilizavel), " + prefixo_ini + ") AS TOTAL \
+            FROM 3a_estoque_utilizavel \
+            WHERE id_estoque_utilizavel \
+            BETWEEN " + prefixo_ini + " \
+            AND " + prefixo_fim + ";"               
 
-        log_(sql) 
-        payProductContinue(req, product, result)
-    });
+        conLocal.query(sql, function (err1, result) {  
+            if (err1) reject(err1);  
+
+            log_(sql) 
+
+            resolve(payProductContinue(req, product, result))
+        });
+    })
+
+    return promise
 }
 
 function payParking(req, product){
@@ -603,130 +610,141 @@ function payParking(req, product){
     }    
 }
 
-function payProductContinue(req, product, data){            
+async function payProductContinue(req, product, data){            
 
-    let id_estoque_utilizavel = data[0].TOTAL           
-    let userId = req.body.userId    
-    let id_produto = product.id_produto            
-    let quantity = product.quantity
-    let selectedsIds = product.selectedsIds        
+    let promise = new Promise((resolve, reject) => {
 
-    for(var j = 0; j < quantity; j++){
-                
-        let last = ++id_estoque_utilizavel
-        let idSubtypeChanged = selectedsIds[j]                                        
-                            
-        let sql = "INSERT INTO 3a_estoque_utilizavel (id_estoque_utilizavel,fk_id_produto,fk_id_tipo_estoque,fk_id_usuarios_inclusao,data_inclusao_utilizavel, impresso) \
-        VALUES(" + last + ", " + id_produto + ", 1," + userId + ", NOW(), 1);"                               
-    
-        conLocal.query(sql, function (err1, result) {  
-            if (err1) throw err1;  
+        let id_estoque_utilizavel = data[0].TOTAL           
+        let userId = req.body.userId    
+        let id_produto = product.id_produto            
+        let quantity = product.quantity
+        let selectedsIds = product.selectedsIds        
 
-            log_(sql)   
-
-            if(idSubtypeChanged > 0)   
-                product.fk_id_subtipo_produto = idSubtypeChanged                    
-         
-            soldAndPrint(req, product, last)
-        });    
-    }
-}
-
-function soldAndPrint(req, product, last){        
-
-    let userId = req.body.userId
-    let userName = req.body.userName
-    let finalValue = req.body.finalValue
-    let idPayment = req.body.idPayment
-    
-    let valor_produto = product.valor_produto            
-
-    product.userName = userName
-    product.finalValue = finalValue    
-
-    let user = userId
-    let obs = "Vendido pelo sistema online"
-    let ip = "localhost"
-    let validade = 1
-    let id_estoque_utilizavel = last
-    let fk_id_subtipo_produto = product.fk_id_subtipo_produto
-    let id_produto = product.id_produto
-    let fk_id_caixa_venda = product.id_caixa_registrado    
-
-    if(fk_id_caixa_venda === undefined)
-        fk_id_caixa_venda = product.fk_id_caixa_venda
-
-    let sql = "INSERT INTO 3a_log_vendas (\
-        fk_id_estoque_utilizavel,\
-        fk_id_usuarios,\
-        fk_id_produto,\
-        fk_id_subtipo_produto,\
-        fk_id_caixa_registrado,\
-        valor_log_venda,\
-        data_log_venda,\
-        obs_log_venda,\
-        ip_maquina_venda,\
-        nome_maquina_venda,\
-        fk_id_tipo_pagamento,\
-        fk_id_validade) \
-    VALUES("
-     + id_estoque_utilizavel + ", " 
-     + user + ", "
-     + id_produto + ", "
-     + fk_id_subtipo_produto + ", "
-     + fk_id_caixa_venda + ", " +
-     + valor_produto + ", " +
-     "NOW(), '" 
-     + obs + "', '" 
-     + ip + "'," 
-     + "'PDVi',"
-     + "(SELECT 3a_tipo_pagamento.id_tipo_pagamento FROM 3a_tipo_pagamento WHERE 3a_tipo_pagamento.nome_tipo_pagamento = '" + idPayment + "'),"
-     + validade + ");"    
-
-     log_(sql)
-     
-    conLocal.query(sql, function (err, result) {          
-        if (err){
-            errorOnSelling.push(id_estoque_utilizavel)
-        }
-        else {
-            // TESTE 
-
-            console.log("########## Adicionando a lista de erros", id_estoque_utilizavel)
-
-            errorOnSelling.push(id_estoque_utilizavel)
-
-            product.id_estoque_utilizavel = id_estoque_utilizavel
-            checkTicketSold(product)
-        }                           
-    });        
-}
-
-
-function checkTicketSold(product){
-    
-    let id_estoque_utilizavel = product.id_estoque_utilizavel
-    let nome_produto = product.nome_produto        
-    let data_log_venda = momenttz().tz('America/Sao_Paulo').format("DD.MM.YYYY hh:mm:ss")
-    let valor_produto = product.valor_produto  
-    let userName = product.userName
-    let finalValue = product.finalValue
-    
-    let sql = "SELECT fk_id_estoque_utilizavel FROM 3a_log_vendas WHERE fk_id_estoque_utilizavel = " + id_estoque_utilizavel + " ORDER BY fk_id_estoque_utilizavel LIMIT 1;"
-
-    log_(sql)
-    conLocal.query(sql, function (err, result) {          
-        if (err) {
-            if (err) throw err;        
-        }
+        for(var j = 0; j < quantity; j++){
+                    
+            let last = ++id_estoque_utilizavel
+            let idSubtypeChanged = selectedsIds[j]                                        
+                                
+            let sql = "INSERT INTO 3a_estoque_utilizavel (id_estoque_utilizavel,fk_id_produto,fk_id_tipo_estoque,fk_id_usuarios_inclusao,data_inclusao_utilizavel, impresso) \
+            VALUES(" + last + ", " + id_produto + ", 1," + userId + ", NOW(), 1);"                               
         
-        if(result.length > 0)
-            printFile(nome_produto, valor_produto, userName, data_log_venda, id_estoque_utilizavel, finalValue, 0)
+            conLocal.query(sql, function (err1, result) {  
+                if (err1) reject(err1);  
 
-        else {
-            errorOnSelling.push(id_estoque_utilizavel)
-        }            
-    }); 
+                log_(sql)   
+
+                if(idSubtypeChanged > 0)   
+                    product.fk_id_subtipo_produto = idSubtypeChanged                    
+            
+                resolve(soldAndPrint(req, product, last))
+            });    
+        }
+
+    });
+
+    return promise
+}
+
+async function soldAndPrint(req, product, last){        
+
+    let promise = new Promise((resolve, reject) => {
+
+        let userId = req.body.userId
+        let userName = req.body.userName
+        let finalValue = req.body.finalValue
+        let idPayment = req.body.idPayment
+        
+        let valor_produto = product.valor_produto            
+
+        product.userName = userName
+        product.finalValue = finalValue    
+
+        let user = userId
+        let obs = "Vendido pelo sistema online"
+        let ip = "localhost"
+        let validade = 1
+        let id_estoque_utilizavel = last
+        let fk_id_subtipo_produto = product.fk_id_subtipo_produto
+        let id_produto = product.id_produto
+        let fk_id_caixa_venda = product.id_caixa_registrado    
+
+        if(fk_id_caixa_venda === undefined)
+            fk_id_caixa_venda = product.fk_id_caixa_venda
+
+        let sql = "INSERT INTO 3a_log_vendas (\
+            fk_id_estoque_utilizavel,\
+            fk_id_usuarios,\
+            fk_id_produto,\
+            fk_id_subtipo_produto,\
+            fk_id_caixa_registrado,\
+            valor_log_venda,\
+            data_log_venda,\
+            obs_log_venda,\
+            ip_maquina_venda,\
+            nome_maquina_venda,\
+            fk_id_tipo_pagamento,\
+            fk_id_validade) \
+        VALUES("
+        + id_estoque_utilizavel + ", " 
+        + user + ", "
+        + id_produto + ", "
+        + fk_id_subtipo_produto + ", "
+        + fk_id_caixa_venda + ", " +
+        + valor_produto + ", " +
+        "NOW(), '" 
+        + obs + "', '" 
+        + ip + "'," 
+        + "'PDVi',"
+        + "(SELECT 3a_tipo_pagamento.id_tipo_pagamento FROM 3a_tipo_pagamento WHERE 3a_tipo_pagamento.nome_tipo_pagamento = '" + idPayment + "'),"
+        + validade + ");"    
+
+        log_(sql)
+        
+        conLocal.query(sql, function (err, result) {          
+            if (err){
+                errorOnSelling.push(id_estoque_utilizavel)
+                if (err) reject(err);
+
+            }
+            else                                                
+                resolve(checkTicketSold(product))                               
+        });         
+    });
+
+    return promise
+}
+
+
+async function checkTicketSold(product){
+    
+    let promise = new Promise((resolve, reject) => {
+
+        let id_estoque_utilizavel = product.id_estoque_utilizavel
+        let nome_produto = product.nome_produto        
+        let data_log_venda = momenttz().tz('America/Sao_Paulo').format("DD.MM.YYYY hh:mm:ss")
+        let valor_produto = product.valor_produto  
+        let userName = product.userName
+        let finalValue = product.finalValue
+        
+        let sql = "SELECT fk_id_estoque_utilizavel FROM 3a_log_vendas WHERE fk_id_estoque_utilizavel = " + id_estoque_utilizavel + " ORDER BY fk_id_estoque_utilizavel LIMIT 1;"
+
+        log_(sql)
+        conLocal.query(sql, function (err, result) {          
+            if (err) {
+                if (err) reject(err);
+            }
+            
+            if(result.length > 0)
+                resolve(printFile(nome_produto, valor_produto, userName, data_log_venda, id_estoque_utilizavel, finalValue, 0))
+
+            else {
+                errorOnSelling.push(id_estoque_utilizavel)
+            }            
+        }); 
+
+    });
+
+    return promise
 }
 
 function confirmCashDrain(req, res){
@@ -926,6 +944,33 @@ function getUsersByName(req, res){
         res.json({"success": result}); 
     });
 }
+
+function getErros(req, res){
+    res.json({"errorOnSelling": errorOnSelling}); 
+}
+
+function recoverPaymentErros(req, res){
+
+    let tickets = req.body.tickets
+
+    tickets.forEach(element => {
+        
+        let sql1 = "DELETE FROM 3a_estoque_utilizavel WHERE id_estoque_utilizavel = " + element + " LIMIT 1;";
+        let sql2 = "DELETE FROM 3a_log_vendas WHERE fk_id_estoque_utilizavel = " + element + " LIMIT 1;";
+    
+        conLocal.query(sql1, function (err1, result) {        
+            //if (err1) throw err1;                       
+        });
+
+        conLocal.query(sql2, function (err1, result) {        
+            //if (err1) throw err1;                       
+        });
+
+    });
+   
+    res.json({"success": 1}); 
+}
+
 
 app.post('/getAllOrders', function(req, res) {    
 
@@ -1310,6 +1355,14 @@ app.post('/changePasswordUser', function(req, res) {
         if (err1) throw err1;           
         res.json({"success": result}); 
     });
+})
+
+app.post('/getErrors', function(req, res) {    
+    getErros(req, res)    
+})
+
+app.post('/recoverPaymentErros', function(req, res) {    
+    recoverPaymentErros(req, res)    
 })
 
 http.listen(8085);
