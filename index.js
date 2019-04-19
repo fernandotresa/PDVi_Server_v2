@@ -969,7 +969,7 @@ function recoverPaymentErros(req, res){
 
 function syncStockLocal(req, res){
 
-    console.log("Sincronizando estoque local....", req.body.products)
+    console.log("Sincronizando estoque local")
 
     let products = req.body.products   
 
@@ -978,7 +978,7 @@ function syncStockLocal(req, res){
         let sql = "UPDATE 3a_produto SET 3a_produto.stock = " + element.stock + " \
             WHERE 3a_produto.id_produto = " + element.id_produto + ";" 
 
-        //log_(sql)
+        log_(sql)
 
         conLocal.query(sql, function (err, result) {          
             if (err) throw err;                                               
@@ -987,6 +987,20 @@ function syncStockLocal(req, res){
 
     res.json({"success": 1}); 
 }
+
+function syncStockOnline(req, res){
+
+    console.log("Sincronizando estoque online")
+
+    let products = req.body.products   
+
+    products.forEach(element => {
+        console.log(element)       
+    });             
+
+    res.json({"success": 1}); 
+}
+
 
 
 app.post('/getAllOrders', function(req, res) {    
@@ -1226,6 +1240,10 @@ app.post('/syncStock', function(req, res) {
 
 app.post('/syncStockLocal', function(req, res) {
     syncStockLocal(req, res)
+});
+
+app.post('/syncStockOnline', function(req, res) {
+    syncStockOnline(req, res)
 });
 
 app.post('/getAllProducts', function(req, res) {
