@@ -1167,12 +1167,47 @@ app.post('/getAreasByName', function(req, res) {
     });
 });
 
+app.post('/syncStock', function(req, res) {
+
+    let idTotem = req.body.id    
+
+    log_('Administrador: ' + idTotem + ' - Sincronizando com estoque online do cliente')
+            
+    let sql = "SELECT p.ID,\
+    p.post_title 'nome',\
+    MAX(CASE WHEN meta.meta_key = '_stock' THEN meta.meta_value END) 'Stock' \
+    FROM wp_posts AS p \
+    JOIN wp_postmeta AS meta ON p.ID = meta.post_ID \
+    LEFT JOIN \
+    ( \
+    SELECT pp.id, \
+    GROUP_CONCAT(t.name SEPARATOR ' > ') AS name \
+    FROM wp_posts AS pp \
+    JOIN wp_term_relationships tr ON pp.id = tr.object_id \
+    JOIN wp_term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id \
+    JOIN wp_terms t ON tt.term_id = t.term_id \
+    || tt.parent = t.term_id \
+    WHERE tt.taxonomy = 'product_cat' \
+    GROUP BY pp.id, tt.term_id \
+    ) cat ON p.id = cat.id \
+    WHERE (p.post_type = 'product' OR p.post_type = 'product_variation') \
+    AND meta.meta_key IN ('_stock') \
+    AND meta.meta_value is not null \
+    GROUP BY p.ID";
+
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });
+});
+
 app.post('/getAllProducts', function(req, res) {
 
-    let idTotem = req.body.id
-    let idArea = req.body.idArea
+    let idTotem = req.body.id    
 
-    log_('Totem: '+ idTotem + ' - Verificando produtos da areas: ' + idArea)
+    log_('Administrador: ' + idTotem + ' - Verificando todos os produtos do cliente')
             
     let sql = "SELECT 3a_produto.*, \
         3a_subtipo_produto.* \
@@ -1181,7 +1216,7 @@ app.post('/getAllProducts', function(req, res) {
         INNER JOIN 3a_area_venda_produtos ON 3a_area_venda_produtos.fk_id_produto = 3a_produto.id_produto \
         ORDER BY 3a_produto.nome_produto ASC;";
 
-    //log_(sql)
+    log_(sql)
 
     conLocal.query(sql, function (err1, result) {        
         if (err1) throw err1;           
