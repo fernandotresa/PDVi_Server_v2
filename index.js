@@ -753,8 +753,7 @@ async function checkTicketSold(product){
             
             if(result.length > 0){
                 decrementStock(product)
-                //resolve(printFile(nome_produto, valor_produto, userName, data_log_venda, id_estoque_utilizavel, finalValue, 0))
-                resolve(true)
+                resolve(printFile(nome_produto, valor_produto, userName, data_log_venda, id_estoque_utilizavel, finalValue, 0))                
             }
                 
 
