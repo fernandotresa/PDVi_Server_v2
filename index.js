@@ -27,7 +27,7 @@ var emailFrom = 'myrestaurantwebapp@gmail.com'
 var emailSubject = 'Qr Code ingresso'
 var pathQRCode = './qrcodes/'
 
-var worksOnline = 0
+var worksOnline = 1
 var idUserOnline = 1
 
 app.use(logger('dev'));
@@ -1159,6 +1159,28 @@ app.post('/getAreasByName', function(req, res) {
     log_('Totem: '+ idTotem + ' - Verificando informações da areas por nome: ' + name)
             
     let sql = "SELECT 3a_area_venda.* FROM 3a_area_venda WHERE nome_area_venda LIKE '%" + name + "%';";
+    //log_(sql)
+
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });
+});
+
+app.post('/getAllProducts', function(req, res) {
+
+    let idTotem = req.body.id
+    let idArea = req.body.idArea
+
+    log_('Totem: '+ idTotem + ' - Verificando produtos da areas: ' + idArea)
+            
+    let sql = "SELECT 3a_produto.*, \
+        3a_subtipo_produto.* \
+        FROM 3a_produto \
+        INNER JOIN 3a_subtipo_produto ON 3a_subtipo_produto.id_subtipo_produto = 3a_produto.fk_id_subtipo_produto \
+        INNER JOIN 3a_area_venda_produtos ON 3a_area_venda_produtos.fk_id_produto = 3a_produto.id_produto \
+        ORDER BY 3a_produto.nome_produto ASC;";
+
     //log_(sql)
 
     conLocal.query(sql, function (err1, result) {        
