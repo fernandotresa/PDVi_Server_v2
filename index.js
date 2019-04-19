@@ -1214,7 +1214,7 @@ app.post('/getAllProducts', function(req, res) {
         FROM 3a_produto \
         INNER JOIN 3a_subtipo_produto ON 3a_subtipo_produto.id_subtipo_produto = 3a_produto.fk_id_subtipo_produto \
         INNER JOIN 3a_area_venda_produtos ON 3a_area_venda_produtos.fk_id_produto = 3a_produto.id_produto \
-        ORDER BY 3a_produto.stock ASC;";
+        ORDER BY 3a_produto.stock DESC;";
 
     log_(sql)
 
