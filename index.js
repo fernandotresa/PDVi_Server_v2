@@ -746,10 +746,8 @@ async function decrementStockOnline(product){
         log_(sql)
         
         con.query(sql, function (err, result) {          
-            if (err){
-                
-                if (err) reject(err);
-            }
+            if (err) 
+                reject(err);                                            
             else                                                
                 resolve(true)                               
         });         
@@ -1018,42 +1016,6 @@ function recoverPaymentErros(req, res){
     res.json({"success": 1}); 
 }
 
-function syncStockLocal(req, res){
-
-    console.log("Sincronizando estoque local")
-
-    let products = req.body.products   
-
-    products.forEach(element => {
-        
-        let sql = "UPDATE 3a_produto SET 3a_produto.stock = " + element.stock + " \
-            WHERE 3a_produto.id_produto = " + element.id_produto + ";" 
-
-        log_(sql)
-
-        conLocal.query(sql, function (err, result) {          
-            if (err) throw err;                                               
-        });
-    });             
-
-    res.json({"success": 1}); 
-}
-
-function syncStockOnline(req, res){
-
-    console.log("Sincronizando estoque online")
-
-    let products = req.body.products   
-
-    products.forEach(element => {
-        console.log(element)       
-    });             
-
-    res.json({"success": 1}); 
-}
-
-
-
 app.post('/getAllOrders', function(req, res) {    
 
     let start = req.body.start
@@ -1287,14 +1249,6 @@ app.post('/syncStock', function(req, res) {
         if (err1) throw err1;           
         res.json({"success": result}); 
     });
-});
-
-app.post('/syncStockLocal', function(req, res) {
-    syncStockLocal(req, res)
-});
-
-app.post('/syncStockOnline', function(req, res) {
-    syncStockOnline(req, res)
 });
 
 app.post('/getAllProducts', function(req, res) {
