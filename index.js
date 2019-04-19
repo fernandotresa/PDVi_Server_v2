@@ -700,7 +700,6 @@ async function soldAndPrint(req, product, last){
             if (err){
                 errorOnSelling.push(id_estoque_utilizavel)
                 if (err) reject(err);
-
             }
             else                                                
                 resolve(checkTicketSold(product))                               
@@ -710,6 +709,28 @@ async function soldAndPrint(req, product, last){
     return promise
 }
 
+async function decrementStock(product){        
+
+    let promise = new Promise((resolve, reject) => {
+        
+        let id_produto = product.id_produto        
+
+        let sql = "UPDATE 3a_produto SET stock = (stock - 1) WHERE id_produto = " + id_produto + ";"
+
+        log_(sql)
+        
+        conLocal.query(sql, function (err, result) {          
+            if (err){
+                errorOnSelling.push(id_estoque_utilizavel)
+                if (err) reject(err);
+            }
+            else                                                
+                resolve(true)                               
+        });         
+    });
+
+    return promise
+}
 
 async function checkTicketSold(product){
     
@@ -730,8 +751,12 @@ async function checkTicketSold(product){
                 if (err) reject(err);
             }
             
-            if(result.length > 0)
-                resolve(printFile(nome_produto, valor_produto, userName, data_log_venda, id_estoque_utilizavel, finalValue, 0))
+            if(result.length > 0){
+                decrementStock(product)
+                //resolve(printFile(nome_produto, valor_produto, userName, data_log_venda, id_estoque_utilizavel, finalValue, 0))
+                resolve(true)
+            }
+                
 
             else {
                 errorOnSelling.push(id_estoque_utilizavel)
