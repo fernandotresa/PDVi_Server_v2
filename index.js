@@ -16,7 +16,7 @@ var ifaces = os.networkInterfaces();
 var ipAddressLocal = "localhost"
 
 const synctime = 10000;
-let clientName = 'Museu de Arte Sacra'
+let clientName = 'Demonstração'
 
 let clientItensOnline = []
 let errorOnSelling = []
@@ -36,21 +36,17 @@ app.use(methodOverride());
 app.use(cors());
 
 var db_config_remote = {
-    host: "venda-online.cacasorqzf2r.sa-east-1.rds.amazonaws.com",
+    host: "rds001.cacasorqzf2r.sa-east-1.rds.amazonaws.com",
     user: "bilheteria",
     password: "c4d3Oc0ntr4t0",
     database: "vendas_online"
 };
 
-var db_config_local = {
-    //host: "10.8.0.46",
-    host: "10.8.0.102",
-    //host: "10.19.31.247",
-    //host: "10.0.2.180",
-    user: "root",
-    password: "Mudaragora00",
-    database: "zoosp"
-    //database: "3access"
+var db_config_local = {    
+    host: "rds001.cacasorqzf2r.sa-east-1.rds.amazonaws.com",    
+    user: "bilheteria",
+    password: "c4d3Oc0ntr4t0",
+    database: "bilheteria"
 };
 
 let con;
