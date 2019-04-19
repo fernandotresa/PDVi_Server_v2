@@ -978,12 +978,14 @@ function syncStockLocal(req, res){
         let sql = "UPDATE 3a_produto SET 3a_produto.stock = " + products.stock + " \
             WHERE 3a_produto.id_produto = " + element.id_produto + ";" 
 
-        log_(sql)
+        //log_(sql)
 
         conLocal.query(sql, function (err, result) {          
             if (err) throw err;                                               
         });
     });             
+
+    res.json({"success": 1}); 
 }
 
 
