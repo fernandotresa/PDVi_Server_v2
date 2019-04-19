@@ -734,11 +734,33 @@ async function decrementStock(product){
     return promise
 }
 
+async function decrementStockOnline(product){        
+
+    let promise = new Promise((resolve, reject) => {
+        
+        let nome_produto = product.nome_produto        
+
+        let sql = "UPDATE vendas_online.wp_postmeta SET meta_value = 900 WHERE meta_key = '_stock' AND post_id = \
+            (SELECT wp_posts.ID FROM wp_posts WHERE wp_posts.post_title = '" + nome_produto + "' LIMIT 1);"        
+
+        log_(sql)
+        
+        conLocal.query(sql, function (err, result) {          
+            if (err){
+                errorOnSelling.push(id_estoque_utilizavel)
+                if (err) reject(err);
+            }
+            else                                                
+                resolve(true)                               
+        });         
+    });
+
+    return promise
+}
+
 async function checkTicketSold(product){
     
     let promise = new Promise((resolve, reject) => {
-
-        console.log(product)
 
         let id_estoque_utilizavel = product.id_estoque_utilizavel
         let nome_produto = product.nome_produto        
@@ -757,6 +779,7 @@ async function checkTicketSold(product){
             
             if(result.length > 0){
                 decrementStock(product)
+                decrementStockOnline(product)
                 resolve(printFile(nome_produto, valor_produto, userName, data_log_venda, id_estoque_utilizavel, finalValue, 0))                
             }
                 
