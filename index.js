@@ -969,7 +969,7 @@ function recoverPaymentErros(req, res){
 
 function syncStockLocal(req, res){
 
-    console.log("Sincronizando estoque local....")
+    console.log("Sincronizando estoque local....", req.body.products)
 
     let products = req.body.products   
 
@@ -978,10 +978,10 @@ function syncStockLocal(req, res){
         let sql = "UPDATE 3a_produto SET 3a_produto.stock = " + products.stock + " \
             WHERE 3a_produto.id_produto = " + element.id_produto + ";" 
 
+        log_(sql)
+
         conLocal.query(sql, function (err, result) {          
-            if (err) throw err;                       
-            
-            log_(sql)
+            if (err) throw err;                                               
         });
     });             
 }
