@@ -662,7 +662,9 @@ async function soldAndPrint(req, product, last){
         let id_estoque_utilizavel = last
         let fk_id_subtipo_produto = product.fk_id_subtipo_produto
         let id_produto = product.id_produto
-        let fk_id_caixa_venda = product.id_caixa_registrado    
+        let fk_id_caixa_venda = product.id_caixa_registrado  
+        
+        product.id_estoque_utilizavel = last
 
         if(fk_id_caixa_venda === undefined)
             fk_id_caixa_venda = product.fk_id_caixa_venda
@@ -735,6 +737,8 @@ async function decrementStock(product){
 async function checkTicketSold(product){
     
     let promise = new Promise((resolve, reject) => {
+
+        console.log(product)
 
         let id_estoque_utilizavel = product.id_estoque_utilizavel
         let nome_produto = product.nome_produto        
