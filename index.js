@@ -975,8 +975,8 @@ function syncStockLocal(req, res){
 
     products.forEach(element => {
         
-        let sql = "UPDATE 3a_produtos SET 3a_produtos.stock = " + products.stock + " \
-            WHERE 3a_produtos.id_produto = " + element.id_produto + ";" 
+        let sql = "UPDATE 3a_produto SET 3a_produto.stock = " + products.stock + " \
+            WHERE 3a_produto.id_produto = " + element.id_produto + ";" 
 
         conLocal.query(sql, function (err, result) {          
             if (err) throw err;                       
