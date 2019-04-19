@@ -967,6 +967,25 @@ function recoverPaymentErros(req, res){
     res.json({"success": 1}); 
 }
 
+function syncStockLocal(req, res){
+
+    console.log("Sincronizando estoque local....")
+
+    let products = req.body.products   
+
+    products.forEach(element => {
+        
+        let sql = "UPDATE 3a_produtos SET 3a_produtos.stock = " + id_estoque_utilizavel + " \
+            WHERE 3a_produtos.id_produto = " + element.id_produto + ";" 
+
+        conLocal.query(sql, function (err, result) {          
+            if (err) throw err;                       
+            
+            log_(sql)
+        });
+    });             
+}
+
 
 app.post('/getAllOrders', function(req, res) {    
 
@@ -1201,6 +1220,10 @@ app.post('/syncStock', function(req, res) {
         if (err1) throw err1;           
         res.json({"success": result}); 
     });
+});
+
+app.post('/syncStockLocal', function(req, res) {
+    syncStockLocal(req, res)
 });
 
 app.post('/getAllProducts', function(req, res) {
