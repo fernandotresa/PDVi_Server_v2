@@ -1197,7 +1197,7 @@ app.post('/syncStock', function(req, res) {
 
     log_(sql)
 
-    conLocal.query(sql, function (err1, result) {        
+    con.query(sql, function (err1, result) {        
         if (err1) throw err1;           
         res.json({"success": result}); 
     });
