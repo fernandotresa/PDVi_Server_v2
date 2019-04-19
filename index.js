@@ -16,7 +16,7 @@ var ifaces = os.networkInterfaces();
 var ipAddressLocal = "localhost"
 
 const synctime = 10000;
-let clientName = 'Demonstração'
+let clientName = 'Planetário'
 
 let clientItensOnline = []
 let errorOnSelling = []
