@@ -747,7 +747,7 @@ async function decrementStockOnline(product){
         
         conLocal.query(sql, function (err, result) {          
             if (err){
-                errorOnSelling.push(id_estoque_utilizavel)
+                
                 if (err) reject(err);
             }
             else                                                
