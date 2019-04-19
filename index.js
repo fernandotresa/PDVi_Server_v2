@@ -975,7 +975,7 @@ function syncStockLocal(req, res){
 
     products.forEach(element => {
         
-        let sql = "UPDATE 3a_produto SET 3a_produto.stock = " + products.stock + " \
+        let sql = "UPDATE 3a_produto SET 3a_produto.stock = " + element.stock + " \
             WHERE 3a_produto.id_produto = " + element.id_produto + ";" 
 
         //log_(sql)
