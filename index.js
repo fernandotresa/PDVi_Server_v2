@@ -740,7 +740,7 @@ async function decrementStockOnline(product){
         
         let nome_produto = product.nome_produto        
 
-        let sql = "UPDATE vendas_online.wp_postmeta SET meta_value = 900 WHERE meta_key = '_stock' AND post_id = \
+        let sql = "UPDATE vendas_online.wp_postmeta SET meta_value = (meta_value - 1) WHERE meta_key = '_stock' AND post_id = \
             (SELECT wp_posts.ID FROM wp_posts WHERE wp_posts.post_title = '" + nome_produto + "' LIMIT 1);"        
 
         log_(sql)
