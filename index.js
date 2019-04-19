@@ -745,7 +745,7 @@ async function decrementStockOnline(product){
 
         log_(sql)
         
-        conLocal.query(sql, function (err, result) {          
+        con.query(sql, function (err, result) {          
             if (err){
                 
                 if (err) reject(err);
