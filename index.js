@@ -420,7 +420,8 @@ function createTicketBaseLocal(productName, itens, k, id_caixa_registrado){
                 let id_estoque =  id_estoque_utilizavel + k    
                 
                 createTicketDatabaseLocal(product, id_estoque)                
-                createTicketBaseLocalContinue(result1, itens, product)                
+                createTicketBaseLocalContinue(result1, itens, product)    
+                decrementStock(product)            
             });        
         }                
     }); 
