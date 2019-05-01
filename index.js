@@ -1017,6 +1017,36 @@ function recoverPaymentErros(req, res){
     res.json({"success": 1}); 
 }
 
+function getAllReceptors(req, res){
+
+    let sql = "SELECT * FROM 3a_ponto_acesso;";
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });
+}
+
+function systemCommand(req, res){
+
+    console.log(req.body)
+
+    let cmd = req.body.cmd
+    let idUser = req.body.idUser
+    let idPonto = req.body.idPonto
+
+    let sql = "INSERT INTO comando_sistema (id_comando, id_user, id_ponto) \
+        VALUES (" + cmd + "," + idUser + "," + idPonto + ");";
+
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });
+}
+
 app.post('/getAllOrders', function(req, res) {    
 
     let start = req.body.start
@@ -1465,6 +1495,18 @@ app.post('/getErrors', function(req, res) {
 
 app.post('/recoverPaymentErros', function(req, res) {    
     recoverPaymentErros(req, res)    
+})
+
+/**
+ * COMANDOS RECEPTOR
+ */
+
+app.post('/getAllReceptors', function(req, res) {    
+    getAllReceptors(req, res)    
+})
+
+app.post('/systemCommand', function(req, res) {    
+    systemCommand(req, res)    
 })
 
 http.listen(8085);
