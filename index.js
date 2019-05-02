@@ -27,7 +27,7 @@ var emailFrom = 'myrestaurantwebapp@gmail.com'
 var emailSubject = 'Qr Code ingresso'
 var pathQRCode = './qrcodes/'
 
-var worksOnline = 1
+var worksOnline = 0
 var idUserOnline = 1
 
 app.use(logger('dev'));
@@ -42,11 +42,18 @@ var db_config_remote = {
     database: "vendas_online"
 };
 
-var db_config_local = {    
+/*var db_config_local = {    
     host: "rds001.cacasorqzf2r.sa-east-1.rds.amazonaws.com",    
     user: "bilheteria",
     password: "c4d3Oc0ntr4t0",
     database: "bilheteria"
+};*/
+
+var db_config_local = {
+    host: "10.8.0.6",
+    user: "root",
+    password: "Mudaragora00",
+    database: "3access"
 };
 
 let con;
@@ -588,7 +595,8 @@ async function payProductNormal(req, product){
 
             log_(sql) 
 
-            resolve(payProductContinue(req, product, result))
+            resolve()
+            payProductContinue(req, product, result)
         });
     })
 
@@ -704,8 +712,11 @@ async function soldAndPrint(req, product, last){
                 errorOnSelling.push(id_estoque_utilizavel)
                 if (err) reject(err);
             }
-            else                                                
-                resolve(checkTicketSold(product))                               
+            else{
+                resolve()
+                checkTicketSold(product)
+            }                                        
+                                
         });         
     });
 
@@ -777,9 +788,10 @@ async function checkTicketSold(product){
             }
             
             if(result.length > 0){
-                decrementStock(product)
-                decrementStockOnline(product)
-                resolve(printFile(nome_produto, valor_produto, userName, data_log_venda, id_estoque_utilizavel, finalValue, 0))                
+                //decrementStock(product)
+                //decrementStockOnline(product)
+                resolve()                
+                printFile(nome_produto, valor_produto, userName, data_log_venda, id_estoque_utilizavel, finalValue, 0)
             }
                 
 
