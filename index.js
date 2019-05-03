@@ -42,19 +42,19 @@ var db_config_remote = {
     database: "vendas_online"
 };
 
-/*var db_config_local = {    
+var db_config_local = {    
     host: "rds001.cacasorqzf2r.sa-east-1.rds.amazonaws.com",    
     user: "bilheteria",
     password: "c4d3Oc0ntr4t0",
     database: "bilheteria"
-};*/
+};
 
-var db_config_local = {
+/*var db_config_local = {
     host: "10.8.0.6",
     user: "root",
     password: "Mudaragora00",
     database: "3access"
-};
+};*/
 
 let con;
 let conLocal;
@@ -594,9 +594,9 @@ async function payProductNormal(req, product){
             if (err1) reject(err1);  
 
             log_(sql) 
-
-            resolve()
+            
             payProductContinue(req, product, result)
+            resolve()
         });
     })
 
@@ -639,9 +639,11 @@ async function payProductContinue(req, product, data){
                 log_(sql)   
 
                 if(idSubtypeChanged > 0)   
-                    product.fk_id_subtipo_produto = idSubtypeChanged                    
-            
-                resolve(soldAndPrint(req, product, last))
+                    product.fk_id_subtipo_produto = idSubtypeChanged                                
+                
+                resolve()
+                soldAndPrint(req, product, last)
+                
             });    
         }
 
@@ -674,6 +676,9 @@ async function soldAndPrint(req, product, last){
         let fk_id_caixa_venda = product.id_caixa_registrado  
         
         product.id_estoque_utilizavel = last
+        id_estoque_utilizavel = product.id_estoque_utilizavel
+
+        console.log("## Vendendo e imprimindo: ", product.id_estoque_utilizavel)
 
         if(fk_id_caixa_venda === undefined)
             fk_id_caixa_venda = product.fk_id_caixa_venda
@@ -713,8 +718,9 @@ async function soldAndPrint(req, product, last){
                 if (err) reject(err);
             }
             else{
-                resolve()
-                checkTicketSold(product)
+                                
+                checkTicketSold(id_estoque_utilizavel, product.nome_produto, valor_produto, userName, finalValue)
+                resolve()                
             }                                        
                                 
         });         
@@ -723,12 +729,10 @@ async function soldAndPrint(req, product, last){
     return promise
 }
 
-async function decrementStock(product){        
+async function decrementStock(id_produto){        
 
     let promise = new Promise((resolve, reject) => {
         
-        let id_produto = product.id_produto        
-
         let sql = "UPDATE 3a_produto SET stock = (stock - 1) WHERE id_produto = " + id_produto + ";"
 
         log_(sql)
@@ -746,12 +750,10 @@ async function decrementStock(product){
     return promise
 }
 
-async function decrementStockOnline(product){        
+async function decrementStockOnline(nome_produto){        
 
     let promise = new Promise((resolve, reject) => {
         
-        let nome_produto = product.nome_produto        
-
         let sql = "UPDATE vendas_online.wp_postmeta SET meta_value = (meta_value - 1) WHERE meta_key = '_stock' AND post_id = \
             (SELECT wp_posts.ID FROM wp_posts WHERE wp_posts.post_title = '" + nome_produto + "' LIMIT 1);"        
 
@@ -768,30 +770,29 @@ async function decrementStockOnline(product){
     return promise
 }
 
-async function checkTicketSold(product){
+function checkTicketSold(id_estoque_utilizavel, nome_produto, valor_produto, userName, finalValue){
     
     let promise = new Promise((resolve, reject) => {
-
-        let id_estoque_utilizavel = product.id_estoque_utilizavel
-        let nome_produto = product.nome_produto        
+        
         let data_log_venda = momenttz().tz('America/Sao_Paulo').format("DD.MM.YYYY hh:mm:ss")
-        let valor_produto = product.valor_produto  
-        let userName = product.userName
-        let finalValue = product.finalValue
         
         let sql = "SELECT fk_id_estoque_utilizavel FROM 3a_log_vendas WHERE fk_id_estoque_utilizavel = " + id_estoque_utilizavel + " ORDER BY fk_id_estoque_utilizavel LIMIT 1;"
-
         log_(sql)
+
         conLocal.query(sql, function (err, result) {          
             if (err) {
                 if (err) reject(err);
             }
             
             if(result.length > 0){
-                //decrementStock(product)
-                //decrementStockOnline(product)
-                resolve()                
+
+                decrementStock(id_estoque_utilizavel)
+
+                if(worksOnline)
+                    decrementStockOnline(nome_produto)
+
                 printFile(nome_produto, valor_produto, userName, data_log_venda, id_estoque_utilizavel, finalValue, 0)
+                resolve()                
             }
                 
 
@@ -1046,10 +1047,10 @@ function systemCommand(req, res){
 
     let cmd = req.body.cmd
     let idUser = req.body.idUser
-    let idPonto = req.body.idPonto
+    let ipPonto = req.body.ipPonto
 
-    let sql = "INSERT INTO comando_sistema (id_comando, id_user, id_ponto) \
-        VALUES (" + cmd + "," + idUser + "," + idPonto + ");";
+    let sql = "INSERT INTO comando_sistema (id_comando, id_user, ip_ponto) \
+        VALUES (" + cmd + "," + idUser + ",'" + ipPonto + "');";
 
     log_(sql)
 
