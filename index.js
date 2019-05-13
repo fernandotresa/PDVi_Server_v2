@@ -16,7 +16,7 @@ var ifaces = os.networkInterfaces();
 var ipAddressLocal = "localhost"
 
 const synctime = 10000;
-let clientName = 'Main'
+let clientName = 'All'
 
 let clientItensOnline = []
 let errorOnSelling = []
@@ -27,7 +27,7 @@ var emailFrom = 'myrestaurantwebapp@gmail.com'
 var emailSubject = 'Qr Code ingresso'
 var pathQRCode = './qrcodes/'
 
-var worksOnline = 0
+var worksOnline = 1
 var idUserOnline = 1
 
 app.use(logger('dev'));
@@ -138,7 +138,7 @@ function startInterface(){
         handleDisconnectRemote();    
 
         if(clientName === 'All')
-            this.getAllProductsClient()
+            getAllProductsClient()
         else
             getProductsClient()
 
