@@ -16,7 +16,7 @@ var ifaces = os.networkInterfaces();
 var ipAddressLocal = "localhost"
 
 const synctime = 10000;
-let clientName = 'Planetário'
+let clientName = 'Main'
 
 let clientItensOnline = []
 let errorOnSelling = []
@@ -39,22 +39,23 @@ var db_config_remote = {
     host: "rds001.cacasorqzf2r.sa-east-1.rds.amazonaws.com",
     user: "bilheteria",
     password: "c4d3Oc0ntr4t0",
-    database: "vendas_online"
+    //database: "vendas_online"
+    database: "fflorestal"
 };
 
-var db_config_local = {    
+/*var db_config_local = {    
     host: "rds001.cacasorqzf2r.sa-east-1.rds.amazonaws.com",    
     user: "bilheteria",
     password: "c4d3Oc0ntr4t0",
     database: "bilheteria"
-};
+};*/
 
-/*var db_config_local = {
-    host: "10.8.0.6",
+var db_config_local = {
+    host: "10.0.2.180",
     user: "root",
     password: "Mudaragora00",
     database: "3access"
-};*/
+};
 
 let con;
 let conLocal;
@@ -135,7 +136,11 @@ function startInterface(){
     if(worksOnline === 1){
         
         handleDisconnectRemote();    
-        getProductsClient()
+
+        if(clientName === 'All')
+            this.getAllProductsClient()
+        else
+            getProductsClient()
 
         setInterval(function(){ 
         syncDatabases()
@@ -256,7 +261,30 @@ function generateQrCode(ticket){
 }
 
 /**
- * Get all itens avaiable for the client on store
+ * Get all itens avaiable for the client on store - All categories
+ */
+function getAllProductsClient(){
+
+    let sql = "SELECT wp_term_relationships.object_id \
+            FROM wp_term_relationships \
+            LEFT JOIN wp_posts  ON wp_term_relationships.object_id = wp_posts.ID \
+            LEFT JOIN wp_term_taxonomy ON wp_term_taxonomy.term_taxonomy_id = wp_term_relationships.term_taxonomy_id \
+            LEFT JOIN wp_terms ON wp_terms.term_id = wp_term_relationships.term_taxonomy_id \
+                WHERE post_type = 'product' \
+                AND taxonomy = 'product_cat'"; 
+
+    log_(sql)
+
+    con.query(sql, function (err1, result) {  
+        if (err1) throw err1;                          
+                
+        populateProductClientArray(result)
+    });   
+}
+
+
+/**
+ * Get all itens avaiable for the client on store - By category
  */
 function getProductsClient(){
 
