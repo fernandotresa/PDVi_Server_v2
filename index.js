@@ -37,8 +37,8 @@ app.use(cors());
 
 var db_config_remote = {
     host: "rds001.cacasorqzf2r.sa-east-1.rds.amazonaws.com",
-    user: "bilheteria",
-    password: "c4d3Oc0ntr4t0",
+    user: "fflorestal",
+    password: "Mudaragora00",
     //database: "vendas_online"
     database: "fflorestal"
 };
