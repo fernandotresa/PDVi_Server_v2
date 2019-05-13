@@ -54,7 +54,7 @@ var db_config_local = {
     host: "10.0.2.180",
     user: "root",
     password: "Mudaragora00",
-    database: "3access"
+    database: "zoosp"
 };
 
 let con;
@@ -406,6 +406,7 @@ function syncDatabaseContinue(data){
 function syncDatabaseFinish(data, caixa){
 
     let id_caixa_registrado = caixa[0].id_caixa_registrado
+
     log_("Último caixa registrado: " + id_caixa_registrado)
 
     for (var i = 0; i < data.length; i++) {                
@@ -428,6 +429,7 @@ function syncDatabaseFinish(data, caixa){
 function createTicketBaseLocal(productName, itens, k, id_caixa_registrado){
 
     let sql = "SELECT * FROM 3a_produto WHERE nome_produto = '" + productName + "';";
+    log_(sql)
     
     conLocal.query(sql, function (err1, result) {  
         if (err1) throw err1;                                                
@@ -814,10 +816,10 @@ function checkTicketSold(id_estoque_utilizavel, nome_produto, valor_produto, use
             
             if(result.length > 0){
 
-                decrementStock(id_estoque_utilizavel)
+                //decrementStock(id_estoque_utilizavel)
 
-                if(worksOnline)
-                    decrementStockOnline(nome_produto)
+                //if(worksOnline)
+                    //decrementStockOnline(nome_produto)
 
                 printFile(nome_produto, valor_produto, userName, data_log_venda, id_estoque_utilizavel, finalValue, 0)
                 resolve()                
