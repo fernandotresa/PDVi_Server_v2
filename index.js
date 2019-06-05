@@ -39,8 +39,8 @@ var db_config_remote = {
     host: "rds001.cacasorqzf2r.sa-east-1.rds.amazonaws.com",
     user: "bilheteria",
     password: "c4d3Oc0ntr4t0",
-    //database: "vendas_online"
-    database: "fflorestal"
+    database: "vendas_online"
+    //database: "fflorestal"
 };
 
 /*var db_config_local = {    
@@ -56,6 +56,13 @@ var db_config_local = {
     password: "Mudaragora00",
     database: "zoosp"
 };
+
+/*var db_config_local = {
+    host: "localhost",
+    user: "bilheteria",
+    password: "Mudaragora00",
+    database: "bilheteria"
+};*/
 
 let con;
 let conLocal;
