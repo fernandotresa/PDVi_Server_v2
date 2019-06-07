@@ -660,15 +660,20 @@ async function payProductContinue(req, product, data){
         let userId = req.body.userId    
         let id_produto = product.id_produto            
         let quantity = product.quantity
-        let selectedsIds = product.selectedsIds        
+        let selectedsIds = product.selectedsIds
+        let urls = product.urls
 
         for(var j = 0; j < quantity; j++){
                     
             let last = ++id_estoque_utilizavel
-            let idSubtypeChanged = selectedsIds[j]                                        
+            let idSubtypeChanged = selectedsIds[j]    
+            let url =  urls[j]                              
+
+            if(!url)
+                url = ""
                                 
-            let sql = "INSERT INTO 3a_estoque_utilizavel (id_estoque_utilizavel,fk_id_produto,fk_id_tipo_estoque,fk_id_usuarios_inclusao,data_inclusao_utilizavel, impresso) \
-            VALUES(" + last + ", " + id_produto + ", 1," + userId + ", NOW(), 1);"                               
+            let sql = "INSERT INTO 3a_estoque_utilizavel (id_estoque_utilizavel,fk_id_produto,fk_id_tipo_estoque,fk_id_usuarios_inclusao,data_inclusao_utilizavel, impresso, url) \
+            VALUES(" + last + ", " + id_produto + ", 1," + userId + ", NOW(), 1, '" + url + "');"                               
         
             conLocal.query(sql, function (err1, result) {  
                 if (err1) reject(err1);  
@@ -1351,6 +1356,64 @@ app.post('/getAllProducts', function(req, res) {
         if (err1) throw err1;           
         res.json({"success": result}); 
     });
+});
+
+app.post('/getProductsAttachments', function(req, res) {
+
+    let idTotem = req.body.id    
+
+    log_('Administrador: ' + idTotem + ' - Verificando todos os produtos com anexo do cliente')
+            
+    let idUser = req.body.idUser
+    let start = req.body.start
+    let end = req.body.end    
+
+    let sql = "SELECT *, false AS checked \
+            FROM 3a_estoque_utilizavel \
+        INNER JOIN 3a_log_vendas ON 3a_log_vendas.fk_id_estoque_utilizavel = 3a_estoque_utilizavel.id_estoque_utilizavel \
+        INNER JOIN 3a_caixa_registrado ON 3a_caixa_registrado.id_caixa_registrado = 3a_log_vendas.fk_id_caixa_registrado \
+        INNER join 3a_produto ON 3a_produto.id_produto = 3a_estoque_utilizavel.fk_id_produto \
+        INNER join 3a_subtipo_produto ON 3a_subtipo_produto.id_subtipo_produto = 3a_log_vendas.fk_id_subtipo_produto \
+        WHERE 3a_log_vendas.fk_id_usuarios = " + idUser + " \
+        AND 3a_log_vendas.data_log_venda BETWEEN '" + start + "' AND  '" + end + "' \
+        ORDER BY 3a_log_vendas.data_log_venda DESC;"
+
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });   
+});
+
+app.post('/getProductsAreaByName', function(req, res) {
+
+   
+    let name = req.body.name
+    let idUser = req.body.idUser
+    let start = req.body.start
+    let end = req.body.end    
+    let idTotem = req.body.id    
+
+    log_('Administrador: ' + idTotem + ' - Verificando todos os produtos com anexo do cliente por ticket')                
+
+    let sql = "SELECT *, false AS checked \
+            FROM 3a_estoque_utilizavel \
+        INNER JOIN 3a_log_vendas ON 3a_log_vendas.fk_id_estoque_utilizavel = 3a_estoque_utilizavel.id_estoque_utilizavel \
+        INNER JOIN 3a_caixa_registrado ON 3a_caixa_registrado.id_caixa_registrado = 3a_log_vendas.fk_id_caixa_registrado \
+        INNER join 3a_produto ON 3a_produto.id_produto = 3a_estoque_utilizavel.fk_id_produto \
+        INNER join 3a_subtipo_produto ON 3a_subtipo_produto.id_subtipo_produto = 3a_log_vendas.fk_id_subtipo_produto \
+        WHERE 3a_log_vendas.fk_id_usuarios = " + idUser + " \
+        AND 3a_log_vendas.data_log_venda BETWEEN '" + start + "' AND  '" + end + "' \
+        AND 3a_estoque_utilizavel = " + name + "\
+        ORDER BY 3a_log_vendas.data_log_venda DESC;"
+
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });   
 });
 
 app.post('/getProductsArea', function(req, res) {
