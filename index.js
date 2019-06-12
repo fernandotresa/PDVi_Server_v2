@@ -11,6 +11,9 @@ var momenttz = require('moment-timezone');
 var qr = require('qr-image');  
 let shell = require('shelljs');
 
+const util = require('util');
+const exec = util.promisify(require('child_process').exec);
+
 var os = require('os');
 var ifaces = os.networkInterfaces();
 var ipAddressLocal = "localhost"
@@ -50,19 +53,19 @@ var db_config_remote = {
     database: "bilheteria"
 };*/
 
-var db_config_local = {
+/*var db_config_local = {
     host: "10.0.2.180",
     user: "root",
     password: "Mudaragora00",
     database: "zoosp"
-};
+};*/
 
-/*var db_config_local = {
+var db_config_local = {
     host: "localhost",
     user: "bilheteria",
     password: "Mudaragora00",
     database: "bilheteria"
-};*/
+};
 
 let con;
 let conLocal;
@@ -663,6 +666,9 @@ async function payProductContinue(req, product, data){
         let selectedsIds = product.selectedsIds
         let urls = product.urls
 
+	if(!urls)
+		urls = []
+
         for(var j = 0; j < quantity; j++){
                     
             let last = ++id_estoque_utilizavel
@@ -1100,6 +1106,16 @@ function systemCommand(req, res){
         if (err1) throw err1;           
         res.json({"success": result}); 
     });
+}
+
+async function systemCommandLocal(req, res) {
+    console.log("Executando comando...")
+    
+    const { stdout, stderr } = await exec('xdotool key ctrl+Tab');
+    console.log('stdout:', stdout);
+    console.log('stderr:', stderr);
+
+    res.json({"success": stdout}); 
 }
 
 app.post('/getAllOrders', function(req, res) {    
@@ -1621,5 +1637,16 @@ app.post('/getAllReceptors', function(req, res) {
 app.post('/systemCommand', function(req, res) {    
     systemCommand(req, res)    
 })
+
+
+/**
+ * COMANDOS TOTEM ACESSO
+ */
+
+app.post('/goAccessTotem', function(req, res) {    
+    console.log("Comando recebido!!!!")
+    
+    systemCommandLocal(req, res)    
+});
 
 http.listen(8086);
