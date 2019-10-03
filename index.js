@@ -595,18 +595,32 @@ async function payProduct(req, res){
 
     errorOnSelling = []
     var promiseArray = [];
+    let isPrePrinted = req.body.isPrePrinted
+
+    let queuePrePrinted = []
 
     for (var i = 0, len = products.length; i < len; i++) {
         
-        promiseArray.push(new Promise((resolve, reject) => {
+        promiseArray.push(new Promise((resolve) => {
 
             let product = products[i]        
             let isParking = product.parking
-        
+                    
             if(isParking)
                 payParking(req, product)
+
+            else if(isPrePrinted){                
+      
+                if(! queuePrePrinted.includes(product.id_estoque_utilizavel)){
+
+                    console.log('Vendendo ingresso pré impresso:', product.id_estoque_utilizavel)
+                    
+                    queuePrePrinted.push(product.id_estoque_utilizavel)                        
+                    payProductPrePrinted(req, product)        
+                }             
+            }
             else
-                payProductNormal(req, product)       
+                payProductNormal(req, product)
                 
             resolve({"success": product})
         })
@@ -615,6 +629,31 @@ async function payProduct(req, res){
     
     res.json(await Promise.all(promiseArray) ); 
 }
+
+function payProductPrePrinted(req, product){
+    
+    let promise = new Promise((resolve) => {
+
+        let quantity = product.quantity
+        let selectedsIds = product.selectedsIds
+
+        for(var j = 0; j < quantity; j++){
+                             
+            let idSubtypeChanged = selectedsIds[j]    
+        
+            if(idSubtypeChanged > 0)   
+                product.fk_id_subtipo_produto = idSubtypeChanged                                
+                        
+            soldAndPrint(req, product, product.id_estoque_utilizavel)                                                            
+        } 
+        
+        resolve(true)
+
+    });
+
+    return promise
+}
+
 
 async function payProductNormal(req, product){
 
@@ -722,7 +761,7 @@ async function soldAndPrint(req, product, last){
         product.finalValue = finalValue    
 
         let user = userId
-        let obs = "Vendido pelo sistema online"
+        let obs = "Vendido pelo sistema"
         let ip = "localhost"
         let validade = 1
         let id_estoque_utilizavel = last
@@ -732,9 +771,7 @@ async function soldAndPrint(req, product, last){
         
         product.id_estoque_utilizavel = last
         id_estoque_utilizavel = product.id_estoque_utilizavel
-
-        console.log("## Vendendo e imprimindo: ", product.id_estoque_utilizavel)
-
+        
         if(fk_id_caixa_venda === undefined)
             fk_id_caixa_venda = product.fk_id_caixa_venda
 
@@ -765,7 +802,7 @@ async function soldAndPrint(req, product, last){
         + "(SELECT 3a_tipo_pagamento.id_tipo_pagamento FROM 3a_tipo_pagamento WHERE 3a_tipo_pagamento.nome_tipo_pagamento = '" + idPayment + "'),"
         + validade + ");"    
 
-        log_(sql)
+        //log_(sql)
         
         conLocal.query(sql, function (err, result) {          
             if (err){
@@ -1065,9 +1102,9 @@ function getErros(req, res){
 
 function recoverPaymentErros(req, res){
 
-    let tickets = req.body.tickets
+/* let tickets = req.body.tickets
 
-    tickets.forEach(element => {
+   tickets.forEach(element => {
         
         let sql1 = "DELETE FROM 3a_estoque_utilizavel WHERE id_estoque_utilizavel = " + element + " LIMIT 1;";
         let sql2 = "DELETE FROM 3a_log_vendas WHERE fk_id_estoque_utilizavel = " + element + " LIMIT 1;";
@@ -1080,7 +1117,7 @@ function recoverPaymentErros(req, res){
             //if (err1) throw err1;                       
         });
 
-    });
+    });*/
    
     res.json({"success": 1}); 
 }
