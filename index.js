@@ -1111,10 +1111,12 @@ function recoverPaymentErros(req, res){
     
         conLocal.query(sql1, function (err1, result) {        
             //if (err1) throw err1;                       
+            log_(sql1)
         });
 
         conLocal.query(sql2, function (err1, result) {        
             //if (err1) throw err1;                       
+            log_(sql2)
         });
 
     });
