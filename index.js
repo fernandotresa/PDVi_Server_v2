@@ -1102,7 +1102,7 @@ function getErros(req, res){
 
 function recoverPaymentErros(req, res){
 
-/* let tickets = req.body.tickets
+ let tickets = req.body.tickets
 
    tickets.forEach(element => {
         
@@ -1117,7 +1117,7 @@ function recoverPaymentErros(req, res){
             //if (err1) throw err1;                       
         });
 
-    });*/
+    });
    
     res.json({"success": 1}); 
 }
