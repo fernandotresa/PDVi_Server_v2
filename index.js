@@ -1735,6 +1735,10 @@ app.post('/goAccessTotem', function(req, res) {
     systemCommandLocal(req, res)    
 });
 
+app.post('/systemCommandLocal', function(req, res) {    
+    systemCommandLocal(req, res)    
+})
+
 
 /**********************
  * MULTIPLO - PRE VENDA
