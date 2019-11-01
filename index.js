@@ -1204,6 +1204,102 @@ function useTicketMultiple(req, res){
         }); 
 }
 
+function getSessions(req, res){
+
+    let sql = "SELECT *, 0 AS lotacaoAtual FROM sessoes;"
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {  
+        if (err1) throw err1;                          
+        res.json({"success": result});  
+    });
+}
+
+function getProductsTypes(req, res){
+
+    let sql = "SELECT * FROM 3a_tipo_produto;"
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {  
+        if (err1) throw err1;                          
+        res.json({"success": result});  
+    });
+}
+
+function addSession(req, res){
+
+    let info = req.body.info
+    let nome = info.nome
+    let status = info.status === "Ativo" ? 1 : 0
+    let obs = info.obs
+    let lotacao = info.lotacao
+ 
+    let sql = "INSERT INTO sessoes (nome, status, lotacao, obs) \
+        VALUES('" + nome + "', " + status + ", " + lotacao + ", '" + obs + "');"                       
+
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {  
+        if (err1) throw err1;  
+
+        addSessionTipos(req, res)                            
+    });  
+}
+
+function addSessionTipos(req, res){
+    
+    let info = req.body.info
+    console.log(info)
+    let tipos = info.tipos
+
+    tipos.forEach(element => {
+        console.log(element)
+    })
+
+    res.json({"success": result}); 
+
+}
+
+function updateSession(req, res){
+
+    let user = req.body.user
+    let password = req.body.password    
+                
+    let sql = "UPDATE 3a_usuarios SET senha_usuarios = '" + password + "', \
+        senha_usuarios_pdvi ='" + password + "' WHERE id_usuarios = " + user.id_usuarios + ";";
+
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result}); 
+    });
+}
+
+function removeSession(req, res){
+
+    let tickets = req.body.tickets
+
+   tickets.forEach(element => {
+        
+        let sql1 = "DELETE FROM 3a_estoque_utilizavel WHERE id_estoque_utilizavel = " + element + " LIMIT 1;";
+        let sql2 = "DELETE FROM 3a_log_vendas WHERE fk_id_estoque_utilizavel = " + element + " LIMIT 1;";
+    
+        conLocal.query(sql1, function (err1, result) {        
+            //if (err1) throw err1;                       
+            log_(sql1)
+        });
+
+        conLocal.query(sql2, function (err1, result) {        
+            //if (err1) throw err1;                       
+            log_(sql2)
+        });
+
+    });
+   
+    res.json({"success": 1}); 
+}
+
 app.post('/getAllOrders', function(req, res) {    
 
     let start = req.body.start
@@ -1793,5 +1889,24 @@ app.post('/useTicketMultiple', function(req, res) {
     useTicketMultiple(req, res)                 
 });
 
+app.post('/getSessions', function(req, res) {
+    getSessions(req, res)                 
+});
+
+app.post('/getProductsTypes', function(req, res) {
+    getProductsTypes(req, res)                 
+});
+
+app.post('/addSession', function(req, res) {
+    addSession(req, res)                 
+});
+
+app.post('/updateSession', function(req, res) {
+    updateSession(req, res)                 
+});
+
+app.post('/removeSession', function(req, res) {
+    removeSession(req, res)                 
+});
 
 http.listen(8086);
