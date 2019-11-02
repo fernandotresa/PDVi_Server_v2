@@ -1215,6 +1215,37 @@ function getSessions(req, res){
     });
 }
 
+
+function getSessionsName(req, res){
+
+    let sql = "SELECT *, 0 AS lotacaoAtual FROM sessoes WHERE nome LIKE '%" + req.body.name + "%'; "
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {  
+        if (err1) throw err1;                          
+        res.json({"success": result});  
+    });
+}
+
+function getSessionsTypes(req, res){
+
+    console.log(req.body)
+    let idSessao = req.body.idSessao
+
+    let sql = "SELECT 3a_tipo_produto.nome_tipo_produto \
+        FROM sessoes \
+        INNER JOIN sessoes_tipo ON sessoes_tipo.id_sessao = sessoes.id \
+        INNER JOIN 3a_tipo_produto ON 3a_tipo_produto.id_tipo_produto = sessoes_tipo.id_tipo_produto \
+        WHERE sessoes_tipo.id_sessao = " + idSessao + ";"
+
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {  
+        if (err1) throw err1;                          
+        res.json({"success": result});  
+    });
+}
+
 function getProductsTypes(req, res){
 
     let sql = "SELECT * FROM 3a_tipo_produto;"
@@ -1242,62 +1273,142 @@ function addSession(req, res){
     conLocal.query(sql, function (err1, result) {  
         if (err1) throw err1;  
 
-        addSessionTipos(req, res)                            
+        addSessionContinue(req, res)        
     });  
 }
 
+function addSessionContinue(req, res){
+
+    delSessionTipos(req, res)
+
+        .then(() => {
+
+            addSessionTipos(req, res)                                
+            .then(() => {
+
+                res.json({"success": true});  
+            })
+            .catch(error => {
+                console.log('Erro ao adicionar tipo de sessão:', error)
+                res.json({"success": false});  
+            })
+            
+        })
+        .catch(error => {
+            console.log('Erro ao deletar tipo de sessão:', error)
+            res.json({"success": false});  
+        })
+}
+
 function addSessionTipos(req, res){
-    
-    let info = req.body.info
-    console.log(info)
-    let tipos = info.tipos
 
-    tipos.forEach(element => {
-        console.log(element)
-    })
+    return new Promise(function(resolve, reject){        
+        
+        let info = req.body.info
+        let tipos = info.tipos
+        let nome = info.nome
+        let promises  = []
 
-    res.json({"success": result}); 
+        tipos.forEach(element => {
 
+            let sql = "INSERT INTO sessoes_tipo (id_tipo_produto, id_sessao) \
+                VALUES (\
+                (SELECT id_tipo_produto FROM 3a_tipo_produto WHERE nome_tipo_produto = '" + element + "' LIMIT 1), \
+                (SELECT id FROM sessoes WHERE nome = '" + nome + "' LIMIT 1));"
+
+            console.log(sql)
+
+            let dbquery = conLocal.query(sql, function (err1, result) {  
+                if (err1) reject(err1);
+            });
+        
+            promises.push(dbquery)
+        })
+
+        Promise.all(promises).then(() => {
+            resolve()
+
+        });
+
+    });    
+}
+
+function delSessionTipos(req, res){
+
+    return new Promise(function(resolve, reject){        
+        
+        let info = req.body.info
+        let nome = info.nome
+        
+        let sql = "DELETE FROM sessoes_tipo WHERE id_sessao = \
+            (SELECT id FROM sessoes WHERE nome = '" + nome + "' LIMIT 1);"
+
+        console.log(sql)
+
+        conLocal.query(sql, function (err1, result) {  
+            if (err1) {
+
+                console.log(err1)
+                reject(err1);
+            }
+
+            resolve()
+        });
+    });    
 }
 
 function updateSession(req, res){
 
-    let user = req.body.user
-    let password = req.body.password    
-                
-    let sql = "UPDATE 3a_usuarios SET senha_usuarios = '" + password + "', \
-        senha_usuarios_pdvi ='" + password + "' WHERE id_usuarios = " + user.id_usuarios + ";";
+    let info = req.body.info
+    let nome = info.nome
+    let status = info.status === "Ativo" ? 1 : 0
+    let obs = info.obs
+    let lotacao = info.lotacao
+ 
+    let sql = "UPDATE sessoes SET \
+                nome = '" + nome + "', \
+                status = " + status + ",\
+                lotacao = " + lotacao + ",\
+                obs = '" + obs + "' \
+                WHERE id = " + info.id + ";"
 
     log_(sql)
 
-    conLocal.query(sql, function (err1, result) {        
-        if (err1) throw err1;           
-        res.json({"success": result}); 
+    conLocal.query(sql, function (err1, result) {  
+        if (err1) throw err1;  
+
+        addSessionContinue(req, res)                            
     });
+
 }
 
 function removeSession(req, res){
 
-    let tickets = req.body.tickets
+    console.log(req.body)
+    let idSession = req.body.idSession
 
-   tickets.forEach(element => {
-        
-        let sql1 = "DELETE FROM 3a_estoque_utilizavel WHERE id_estoque_utilizavel = " + element + " LIMIT 1;";
-        let sql2 = "DELETE FROM 3a_log_vendas WHERE fk_id_estoque_utilizavel = " + element + " LIMIT 1;";
-    
-        conLocal.query(sql1, function (err1, result) {        
-            //if (err1) throw err1;                       
-            log_(sql1)
-        });
+    let promises = []
 
-        conLocal.query(sql2, function (err1, result) {        
-            //if (err1) throw err1;                       
-            log_(sql2)
-        });
+    let sql1 = "DELETE FROM sessoes WHERE id = " + idSession + " LIMIT 1;";
+    let sql2 = "DELETE FROM sessoes_tipo WHERE id_sessao = " + idSession + ";";
 
+    console.log(sql1)
+    console.log(sql2)
+
+    let dbquery1 = conLocal.query(sql1, function (err1, result) {  
+        if (err1) throw err1;
     });
-   
-    res.json({"success": 1}); 
+
+    let dbquery2 = conLocal.query(sql2, function (err1, result) {  
+        if (err1) throw err1;
+    });
+
+    promises.push(dbquery1)
+    promises.push(dbquery2)
+
+    Promise.all(promises).then(() => {
+        res.json({"success": 1});         
+    });        
 }
 
 app.post('/getAllOrders', function(req, res) {    
@@ -1347,7 +1458,7 @@ app.post('/getAllOrdersByCPF', function(req, res) {
     log_(sql)
 
     conLocal.query(sql, function (err1, result) {  
-        if (err1) throw err1;                          
+        if (err1) throw err1;
         res.json({"success": result});  
     });
 });
@@ -1891,6 +2002,16 @@ app.post('/useTicketMultiple', function(req, res) {
 
 app.post('/getSessions', function(req, res) {
     getSessions(req, res)                 
+});
+
+app.post('/getSessionsName', function(req, res) {
+    getSessionsName(req, res)                 
+});
+
+
+
+app.post('/getSessionsTypes', function(req, res) {
+    getSessionsTypes(req, res)                 
 });
 
 app.post('/getProductsTypes', function(req, res) {
