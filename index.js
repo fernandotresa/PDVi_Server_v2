@@ -1228,8 +1228,7 @@ function getSessionsName(req, res){
 }
 
 function getSessionsTypes(req, res){
-
-    console.log(req.body)
+    
     let idSessao = req.body.idSessao
 
     let sql = "SELECT 3a_tipo_produto.nome_tipo_produto \
@@ -1289,13 +1288,11 @@ function addSessionContinue(req, res){
                 res.json({"success": true});  
             })
             .catch(error => {
-                console.log('Erro ao adicionar tipo de sessão:', error)
                 res.json({"success": false});  
             })
             
         })
         .catch(error => {
-            console.log('Erro ao deletar tipo de sessão:', error)
             res.json({"success": false});  
         })
 }
@@ -1315,8 +1312,6 @@ function addSessionTipos(req, res){
                 VALUES (\
                 (SELECT id_tipo_produto FROM 3a_tipo_produto WHERE nome_tipo_produto = '" + element + "' LIMIT 1), \
                 (SELECT id FROM sessoes WHERE nome = '" + nome + "' LIMIT 1));"
-
-            console.log(sql)
 
             let dbquery = conLocal.query(sql, function (err1, result) {  
                 if (err1) reject(err1);
@@ -1343,12 +1338,8 @@ function delSessionTipos(req, res){
         let sql = "DELETE FROM sessoes_tipo WHERE id_sessao = \
             (SELECT id FROM sessoes WHERE nome = '" + nome + "' LIMIT 1);"
 
-        console.log(sql)
-
         conLocal.query(sql, function (err1, result) {  
             if (err1) {
-
-                console.log(err1)
                 reject(err1);
             }
 
@@ -1384,16 +1375,12 @@ function updateSession(req, res){
 
 function removeSession(req, res){
 
-    console.log(req.body)
     let idSession = req.body.idSession
 
     let promises = []
 
     let sql1 = "DELETE FROM sessoes WHERE id = " + idSession + " LIMIT 1;";
     let sql2 = "DELETE FROM sessoes_tipo WHERE id_sessao = " + idSession + ";";
-
-    console.log(sql1)
-    console.log(sql2)
 
     let dbquery1 = conLocal.query(sql1, function (err1, result) {  
         if (err1) throw err1;
@@ -1409,6 +1396,43 @@ function removeSession(req, res){
     Promise.all(promises).then(() => {
         res.json({"success": 1});         
     });        
+}
+
+function getSessionsTicket(req, res){
+
+    let sql = "SELECT *  FROM sessoes \
+        INNER JOIN sessoes_tipo ON sessoes_tipo.id_sessao = sessoes.id \
+            WHERE sessoes_tipo.id_tipo_produto = " + req.body.idTipoProduto + ";"
+        
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {  
+        if (err1) throw err1;                          
+        res.json({"success": result});  
+    });
+}
+
+function getSessionsTicketTotal(req, res){
+
+    let nowstr = moment().format('YYYY-MM-DD')
+    let endstr = moment().format('YYYY-MM-DD')
+
+    nowstr += 'T00:00:00'
+    endstr += 'T23:59:59'
+
+    let sql = "SELECT COUNT(fk_id_estoque_utilizavel) AS lotacaoAtual \
+        FROM 3a_log_vendas \
+        INNER join 3a_produto ON 3a_produto.id_produto = 3a_log_vendas.fk_id_produto \
+        INNER join 3a_tipo_produto ON 3a_tipo_produto.id_tipo_produto = 3a_produto.fk_id_tipo_produto \
+            WHERE 3a_tipo_produto.id_tipo_produto = " + req.body.idTipoProduto + " \
+            AND data_log_venda BETWEEN '" + nowstr + "' AND '" + endstr  + "';"
+        
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {  
+        if (err1) throw err1;                          
+        res.json({"success": result});  
+    });
 }
 
 app.post('/getAllOrders', function(req, res) {    
@@ -2008,8 +2032,6 @@ app.post('/getSessionsName', function(req, res) {
     getSessionsName(req, res)                 
 });
 
-
-
 app.post('/getSessionsTypes', function(req, res) {
     getSessionsTypes(req, res)                 
 });
@@ -2028,6 +2050,14 @@ app.post('/updateSession', function(req, res) {
 
 app.post('/removeSession', function(req, res) {
     removeSession(req, res)                 
+});
+
+app.post('/getSessionsTicket', function(req, res) {
+    getSessionsTicket(req, res)                 
+});
+
+app.post('/getSessionsTicketTotal', function(req, res) {
+    getSessionsTicketTotal(req, res)                 
 });
 
 http.listen(8086);
