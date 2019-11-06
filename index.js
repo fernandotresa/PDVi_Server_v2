@@ -1227,15 +1227,15 @@ function getSessionsName(req, res){
     });
 }
 
-function getSessionsTypes(req, res){
+function getSessionsProducts(req, res){
     
     let idSessao = req.body.idSessao
 
-    let sql = "SELECT 3a_tipo_produto.nome_tipo_produto \
+    let sql = "SELECT 3a_produto.nome_produto \
         FROM sessoes \
-        INNER JOIN sessoes_tipo ON sessoes_tipo.id_sessao = sessoes.id \
-        INNER JOIN 3a_tipo_produto ON 3a_tipo_produto.id_tipo_produto = sessoes_tipo.id_tipo_produto \
-        WHERE sessoes_tipo.id_sessao = " + idSessao + ";"
+        INNER JOIN sessoes_produtos ON sessoes_produtos.id_sessao = sessoes.id \
+        INNER JOIN 3a_produto ON 3a_produto.id_produto = sessoes_produtos.id_produto \
+        WHERE sessoes_produtos.id_sessao = " + idSessao + ";"
 
     log_(sql)
 
@@ -1248,6 +1248,17 @@ function getSessionsTypes(req, res){
 function getProductsTypes(req, res){
 
     let sql = "SELECT * FROM 3a_tipo_produto;"
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {  
+        if (err1) throw err1;                          
+        res.json({"success": result});  
+    });
+}
+
+function getProducts(req, res){
+
+    let sql = "SELECT * FROM 3a_produto;"
     log_(sql)
 
     conLocal.query(sql, function (err1, result) {  
@@ -1308,10 +1319,12 @@ function addSessionTipos(req, res){
 
         tipos.forEach(element => {
 
-            let sql = "INSERT INTO sessoes_tipo (id_tipo_produto, id_sessao) \
+            let sql = "INSERT INTO sessoes_produtos (id_produto, id_sessao) \
                 VALUES (\
-                (SELECT id_tipo_produto FROM 3a_tipo_produto WHERE nome_tipo_produto = '" + element + "' LIMIT 1), \
+                (SELECT id_produto FROM 3a_produto WHERE nome_produto = '" + element + "' LIMIT 1), \
                 (SELECT id FROM sessoes WHERE nome = '" + nome + "' LIMIT 1));"
+
+            log_(sql)
 
             let dbquery = conLocal.query(sql, function (err1, result) {  
                 if (err1) reject(err1);
@@ -1335,7 +1348,7 @@ function delSessionTipos(req, res){
         let info = req.body.info
         let nome = info.nome
         
-        let sql = "DELETE FROM sessoes_tipo WHERE id_sessao = \
+        let sql = "DELETE FROM sessoes_produtos WHERE id_sessao = \
             (SELECT id FROM sessoes WHERE nome = '" + nome + "' LIMIT 1);"
 
         conLocal.query(sql, function (err1, result) {  
@@ -1380,7 +1393,7 @@ function removeSession(req, res){
     let promises = []
 
     let sql1 = "DELETE FROM sessoes WHERE id = " + idSession + " LIMIT 1;";
-    let sql2 = "DELETE FROM sessoes_tipo WHERE id_sessao = " + idSession + ";";
+    let sql2 = "DELETE FROM sessoes_produtos WHERE id_sessao = " + idSession + ";";
 
     let dbquery1 = conLocal.query(sql1, function (err1, result) {  
         if (err1) throw err1;
@@ -1401,8 +1414,8 @@ function removeSession(req, res){
 function getSessionsTicket(req, res){
 
     let sql = "SELECT *  FROM sessoes \
-        INNER JOIN sessoes_tipo ON sessoes_tipo.id_sessao = sessoes.id \
-            WHERE sessoes_tipo.id_tipo_produto = " + req.body.idTipoProduto + ";"
+        INNER JOIN sessoes_produtos ON sessoes_produtos.id_sessao = sessoes.id \
+            WHERE sessoes_produtos.id_produto = " + req.body.idProduto + ";"
         
     log_(sql)
 
@@ -2032,13 +2045,18 @@ app.post('/getSessionsName', function(req, res) {
     getSessionsName(req, res)                 
 });
 
-app.post('/getSessionsTypes', function(req, res) {
-    getSessionsTypes(req, res)                 
+app.post('/getSessionsProducts', function(req, res) {
+    getSessionsProducts(req, res)                 
 });
 
 app.post('/getProductsTypes', function(req, res) {
     getProductsTypes(req, res)                 
 });
+
+app.post('/getProducts', function(req, res) {
+    getProducts(req, res)                 
+});
+
 
 app.post('/addSession', function(req, res) {
     addSession(req, res)                 
