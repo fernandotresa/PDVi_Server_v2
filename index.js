@@ -503,7 +503,7 @@ function createTicketBaseLocalContinue(data, itens, product){
 
     let id_estoque_utilizavel = data[0].id_estoque_utilizavel
                        
-    let sql = "INSERT INTO 3a_vendas_online (order_id, post_date, billing_email, _billing_first_name, _billing_last_name, _billing_address_1,\
+    let sql = "INSERT INTO vendas_online (order_id, post_date, billing_email, _billing_first_name, _billing_last_name, _billing_address_1,\
         _billing_address_2, _billing_city, _billing_state, _billing_postcode, _shipping_first_name, _shipping_last_name, _shipping_address_1, _shipping_address_2, _shipping_city, _shipping_state,\
         _shipping_postcode, order_total, order_tax, paid_date, order_items, id_estoque_utilizavel, _billing_cpf) VALUES \
             (" + order_id + ", '" + post_date + "', '" + billing_email + "', '" + _billing_first_name + "', '" + _billing_last_name + "', '" + _billing_address_1 + "', '" + _billing_address_2 + "', '" + _billing_city + "', '" +
@@ -1453,7 +1453,7 @@ app.post('/getAllOrders', function(req, res) {
     let start = req.body.start
     let end = req.body.end
 
-    let sql = "SELECT * FROM 3a_vendas_online WHERE datetime BETWEEN '" + start + "' AND '" + end + "';"
+    let sql = "SELECT * FROM vendas_online WHERE datetime BETWEEN '" + start + "' AND '" + end + "';"
     log_(sql)
 
     conLocal.query(sql, function (err1, result) {  
@@ -1469,7 +1469,7 @@ app.post('/getAllOrdersByName', function(req, res) {
     let end = req.body.end
 
     let sql = "SELECT * \
-        FROM 3a_vendas_online \
+        FROM vendas_online \
         WHERE _billing_first_name LIKE '%" + name + "%' \
         AND datetime BETWEEN '" + start + "' AND '" + end + "';"
 
@@ -1488,7 +1488,7 @@ app.post('/getAllOrdersByCPF', function(req, res) {
     let end = req.body.end
 
     let sql = "SELECT * \
-        FROM 3a_vendas_online \
+        FROM vendas_online \
         WHERE _billing_cpf LIKE '%" + name + "%' \
         AND datetime BETWEEN '" + start + "' AND '" + end + "';"
 
