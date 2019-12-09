@@ -866,7 +866,8 @@ function checkTicketSold(id_estoque_utilizavel, nome_produto, valor_produto, use
     
     let promise = new Promise((resolve, reject) => {
         
-        let data_log_venda = momenttz().tz('America/Sao_Paulo').format("DD.MM.YYYY hh:mm:ss")
+        //let data_log_venda = momenttz().tz('America/Sao_Paulo').format("DD.MM.YYYY hh:mm:ss")
+        let data_log_venda = moment().format("DD.MM.YYYY hh:mm:ss")
         
         let sql = "SELECT fk_id_estoque_utilizavel FROM 3a_log_vendas WHERE fk_id_estoque_utilizavel = " + id_estoque_utilizavel + " ORDER BY fk_id_estoque_utilizavel LIMIT 1;"
         log_(sql)
