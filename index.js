@@ -189,7 +189,7 @@ var transporte = nodemailer.createTransport({
     service: 'Gmail', 
     auth: {
       user: 'myrestaurantwebapp', 
-      pass: '123edcdiego'
+      pass: ''
     } 
 });
 
@@ -1267,6 +1267,26 @@ function getProducts(req, res){
     });
 }
 
+function addUsers(req, res){
+
+    let info = req.body
+    let name = info.username
+    //let status = info.status === "Ativo" ? 1 : 0
+    let status = 1
+    let password = info.password
+    let acl = info.acl
+ 
+    let sql = "INSERT INTO 3a_usuarios (login_usuarios, fk_id_nivel_acesso, ativo_usuarios, senha_usuarios, senha_usuarios_pdvi) \
+        VALUES('" + name + "', (SELECT id_nivel_acesso FROM 3a_nivel_acesso WHERE nome_nivel_acesso = '" + acl + "' LIMIT 1), " + status + ", '" + password + "', '" + password + "');"                       
+
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {  
+        if (err1) throw err1;                          
+        res.json({"success": result});  
+    });
+}
+
 function addSession(req, res){
 
     let info = req.body.info
@@ -1832,6 +1852,19 @@ app.post('/payProducts', function(req, res) {
     payProduct(req, res)
 });
 
+app.post('/getAcls', function(req, res) {    
+    
+    let sql = "SELECT * FROM 3a_nivel_acesso;";
+
+    log_(sql)
+
+    conLocal.query(sql, function (err1, result) {        
+        if (err1) throw err1;           
+        res.json({"success": result, "ip": ipAddressLocal}); 
+    });
+
+});
+
 app.post('/getAuth', function(req, res) {    
     let email = req.body.email
     let password = req.body.password    
@@ -2060,6 +2093,10 @@ app.post('/getProducts', function(req, res) {
 
 app.post('/addSession', function(req, res) {
     addSession(req, res)                 
+});
+
+app.post('/addUsers', function(req, res) {
+    addUsers(req, res)                 
 });
 
 app.post('/updateSession', function(req, res) {
