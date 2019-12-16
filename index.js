@@ -61,7 +61,7 @@ var db_config_remote = {
 };*/
 
 var db_config_local = {
-    host: "10.9.0.8",
+    host: "10.0.2.243",
     user: "root",
     password: "Mudaragora00",
     database: "3access"
@@ -1259,7 +1259,7 @@ function getProductsTypes(req, res){
 
 function getProducts(req, res){
 
-    let sql = "SELECT * FROM 3a_produto;"
+    let sql = "SELECT * FROM 3a_produto ORDER BY posicao_produto_imprimivel;"
     log_(sql)
 
     conLocal.query(sql, function (err1, result) {  
@@ -1567,21 +1567,34 @@ app.post('/printTicketMultiple', function(req, res) {
     let tickets = req.body.tickets
     let userName = req.body.userName
     let reprint = req.body.reprint
+    let promises = []
 
     for (var i = 0, len = tickets.length; i < len; ++i) {
         
-        let ticket = tickets[i]         
+        let promise =  new Promise((resolve) => {
 
-        let nome_produto = ticket.nome_produto
-        let valor_produto = ticket.valor_produto
-        let data_log_venda = ticket.data_log_venda
-        let fk_id_estoque_utilizavel = ticket.fk_id_estoque_utilizavel
-        let valor_log_venda = ticket.valor_log_venda
+            let ticket = tickets[i]         
+            let nome_produto = ticket.nome_produto
+            let valor_produto = ticket.valor_produto
+            let data_log_venda = ticket.data_log_venda
+            let fk_id_estoque_utilizavel = ticket.fk_id_estoque_utilizavel
+            let valor_log_venda = ticket.valor_log_venda
 
-        printFile(nome_produto, valor_produto, userName, data_log_venda, fk_id_estoque_utilizavel, valor_log_venda, reprint)
+            printFile(nome_produto, valor_produto, userName, data_log_venda, fk_id_estoque_utilizavel, valor_log_venda, reprint)
+            resolve()
+
+        });
+
+        promises.push(promise)
+        
     }
     
-    res.json({"success": "true"});  
+    Promise.all(promises).then(() => {
+        res.json({"success": "true"});  
+        resolve(console.log(promises.length + ' Todas impressões enviadas com sucesso'))
+      });
+
+    
 });
 
 app.post('/printTicketOnline', function(req, res) {    
@@ -1715,7 +1728,7 @@ app.post('/getAllProducts', function(req, res) {
         FROM 3a_produto \
         INNER JOIN 3a_subtipo_produto ON 3a_subtipo_produto.id_subtipo_produto = 3a_produto.fk_id_subtipo_produto \
         INNER JOIN 3a_area_venda_produtos ON 3a_area_venda_produtos.fk_id_produto = 3a_produto.id_produto \
-        ORDER BY 3a_produto.stock DESC;";
+        ORDER BY posicao_produto_imprimivel;";
 
     log_(sql)
 
@@ -1798,7 +1811,7 @@ app.post('/getProductsArea', function(req, res) {
         INNER JOIN 3a_subtipo_produto ON 3a_subtipo_produto.id_subtipo_produto = 3a_produto.fk_id_subtipo_produto \
         INNER JOIN 3a_area_venda_produtos ON 3a_area_venda_produtos.fk_id_produto = 3a_produto.id_produto \
         WHERE 3a_area_venda_produtos.fk_id_area_venda = " + idArea + " \
-        ORDER BY 3a_produto.stock DESC;";
+        ORDER BY posicao_produto_imprimivel;";
 
     //log_(sql)
 
@@ -1821,7 +1834,7 @@ app.post('/getProductsAreaByName', function(req, res) {
         INNER JOIN 3a_area_venda_produtos ON 3a_area_venda_produtos.fk_id_produto = 3a_produto.id_produto \
         WHERE 3a_area_venda_produtos.fk_id_area_venda = " + idArea + " \
         AND 3a_produto.nome_produto LIKE '%" + name + "%' \
-        ORDER BY 3a_produto.posicao_produto_imprimivel ASC;";
+        ORDER BY 3a_produto.posicao_produto_imprimivel;";
 
     //log_(sql)
 
