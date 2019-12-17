@@ -197,11 +197,11 @@ function printFile(tipoIngresso, valorIngresso, operador, dataHora, idTicket, to
     
     console.log("Realizando impressão do ingresso ", idTicket)
 
-    let cmd = 'sh impressao.sh "' + tipoIngresso + '" ' + valorIngresso + ' ' + operador + ' "' 
+    let cmd = 'sh /home/pi/PDVi_Server/impressao.sh "' + tipoIngresso + '" ' + valorIngresso + ' ' + operador + ' "' 
                 + dataHora + '" ' + idTicket + ' ' + totalVenda
     
     if(reprint === 1){
-        cmd = 'sh reimpressao.sh "' + tipoIngresso + '" ' + valorIngresso + ' ' + operador + ' "' 
+        cmd = 'sh /home/pi/PDVi_Server/reimpressao.sh "' + tipoIngresso + '" ' + valorIngresso + ' ' + operador + ' "' 
         + dataHora + '" ' + idTicket + ' ' + totalVenda
     }
     
