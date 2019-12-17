@@ -207,7 +207,7 @@ function printFile(tipoIngresso, valorIngresso, operador, dataHora, idTicket, to
         
         console.log(cmd)
 
-        shell.exec(cmd, {async: false}, function(code, stdout, stderr) {     
+        shell.exec(cmd, {async: true}, function(code, stdout, stderr) {     
 
         console.log("Realizando impressão do ingresso ", idTicket)
         console.log('Exit code:', code);
