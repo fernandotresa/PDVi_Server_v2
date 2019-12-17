@@ -208,12 +208,13 @@ function printFile(tipoIngresso, valorIngresso, operador, dataHora, idTicket, to
         console.log("Realizando impressão do ingresso ", idTicket)
         console.log(cmd)
 
-        shell.exec(cmd, {async: false}, function(code, stdout, stderr) {        
+        shell.exec(cmd, {async: false}, function(code, stdout, stderr) {     
+
             console.log('Exit code:', code);
             console.log('Program output:', stdout);
             console.log('Program stderr:', stderr)
 
-            resolve(true)        
+            resolve()        
      });
         
   });
@@ -889,7 +890,11 @@ function checkTicketSold(id_estoque_utilizavel, nome_produto, valor_produto, use
                     //decrementStockOnline(nome_produto)
 
                 printFile(nome_produto, valor_produto, userName, data_log_venda, id_estoque_utilizavel, finalValue, 0)
-                resolve()                
+                .then(() => {
+                    
+                    resolve()                
+                })
+                
             }
                 
 
