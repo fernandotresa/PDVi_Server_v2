@@ -7,7 +7,7 @@ let methodOverride = require('method-override')
 let cors = require('cors');
 let http = require('http').Server(app);
 var moment = require('moment');
-var momenttz = require('moment-timezone');
+//var momenttz = require('moment-timezone');
 var qr = require('qr-image');  
 let shell = require('shelljs');
 
@@ -208,15 +208,18 @@ function printFile(tipoIngresso, valorIngresso, operador, dataHora, idTicket, to
         console.log("Realizando impressão do ingresso ", idTicket)
         console.log(cmd)
 
-        shell.exec(cmd, {async: false}, function(code, stdout, stderr) {     
+        setTimeout(() => {
 
-            console.log('Exit code:', code);
-            console.log('Program output:', stdout);
-            console.log('Program stderr:', stderr)
+            shell.exec(cmd, {async: false}, function(code, stdout, stderr) {     
 
-            resolve()        
-     });
-        
+                console.log('Exit code:', code);
+                console.log('Program output:', stdout);
+                console.log('Program stderr:', stderr)
+    
+                resolve()        
+         });
+
+        }, 1000)                
   });
 }
 
@@ -891,7 +894,7 @@ function checkTicketSold(id_estoque_utilizavel, nome_produto, valor_produto, use
 
                 printFile(nome_produto, valor_produto, userName, data_log_venda, id_estoque_utilizavel, finalValue, 0)
                 .then(() => {
-                    
+
                     resolve()                
                 })
                 
