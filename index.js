@@ -43,7 +43,6 @@ var db_config_remote = {
     user: "bilheteria",
     password: "c4d3Oc0ntr4t0",
     database: "vendas_online"
-    //database: "fflorestal"
 };
 
 /*var db_config_local = {    
@@ -51,17 +50,17 @@ var db_config_remote = {
     user: "bilheteria",
     password: "c4d3Oc0ntr4t0",
     database: "bilheteria"
-};*/
-
-/*var db_config_local = {
-    host: "10.0.2.180",
-    user: "root",
-    password: "Mudaragora00",
-    database: "zoosp"
-};*/
+};
 
 var db_config_local = {
     host: "10.0.2.243",
+    user: "root",
+    password: "Mudaragora00",
+    database: "3access"
+};*/
+
+var db_config_local = {
+    host: "10.9.0.8",
     user: "root",
     password: "Mudaragora00",
     database: "3access"
@@ -1811,9 +1810,9 @@ app.post('/getProductsArea', function(req, res) {
         INNER JOIN 3a_subtipo_produto ON 3a_subtipo_produto.id_subtipo_produto = 3a_produto.fk_id_subtipo_produto \
         INNER JOIN 3a_area_venda_produtos ON 3a_area_venda_produtos.fk_id_produto = 3a_produto.id_produto \
         WHERE 3a_area_venda_produtos.fk_id_area_venda = " + idArea + " \
-        ORDER BY posicao_produto_imprimivel;";
+        ORDER BY posicao_produto_imprimivel ASC;";
 
-    //log_(sql)
+    log_(sql)
 
     conLocal.query(sql, function (err1, result) {        
         if (err1) throw err1;           
