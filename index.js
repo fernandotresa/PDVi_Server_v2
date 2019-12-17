@@ -50,21 +50,21 @@ var db_config_remote = {
     user: "bilheteria",
     password: "c4d3Oc0ntr4t0",
     database: "bilheteria"
-};
+};*/
 
 var db_config_local = {
     host: "10.0.2.243",
     user: "root",
     password: "Mudaragora00",
     database: "3access"
-};*/
+};
 
-var db_config_local = {
+/*var db_config_local = {
     host: "10.9.0.8",
     user: "root",
     password: "Mudaragora00",
     database: "3access"
-};
+};*/
 
 let con;
 let conLocal;
@@ -195,23 +195,28 @@ var transporte = nodemailer.createTransport({
 
 function printFile(tipoIngresso, valorIngresso, operador, dataHora, idTicket, totalVenda, reprint){
     
-    console.log("Realizando impressão do ingresso ", idTicket)
+    return new Promise((resolve) => {
 
-    let cmd = 'sh /home/pi/PDVi_Server/impressao.sh "' + tipoIngresso + '" ' + valorIngresso + ' ' + operador + ' "' 
-                + dataHora + '" ' + idTicket + ' ' + totalVenda
-    
-    if(reprint === 1){
-        cmd = 'sh /home/pi/PDVi_Server/reimpressao.sh "' + tipoIngresso + '" ' + valorIngresso + ' ' + operador + ' "' 
-        + dataHora + '" ' + idTicket + ' ' + totalVenda
-    }
-    
-    console.log(cmd)
+        let cmd = 'sh /home/pi/PDVi_Server/impressao.sh "' + tipoIngresso + '" ' + valorIngresso + ' ' + operador + ' "' 
+            + dataHora + '" ' + idTicket + ' ' + totalVenda
 
-    shell.exec(cmd, {async: false}, function(code, stdout, stderr) {
-        console.log('Exit code:', code);
-        console.log('Program output:', stdout);
-        console.log('Program stderr:', stderr);        
-    });
+        if(reprint === 1){
+                cmd = 'sh /home/pi/PDVi_Server/reimpressao.sh "' + tipoIngresso + '" ' + valorIngresso + ' ' + operador + ' "' 
+                        + dataHora + '" ' + idTicket + ' ' + totalVenda
+        }
+
+        console.log("Realizando impressão do ingresso ", idTicket)
+        console.log(cmd)
+
+        shell.exec(cmd, {async: false}, function(code, stdout, stderr) {        
+            console.log('Exit code:', code);
+            console.log('Program output:', stdout);
+            console.log('Program stderr:', stderr)
+
+            resolve(true)        
+     });
+        
+  });
 }
 
 function sendEmail(files, emailAddr){
