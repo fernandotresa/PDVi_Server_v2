@@ -204,22 +204,19 @@ function printFile(tipoIngresso, valorIngresso, operador, dataHora, idTicket, to
                 cmd = 'sh /home/pi/PDVi_Server/reimpressao.sh "' + tipoIngresso + '" ' + valorIngresso + ' ' + operador + ' "' 
                         + dataHora + '" ' + idTicket + ' ' + totalVenda
         }
-
-        console.log("Realizando impressão do ingresso ", idTicket)
+        
         console.log(cmd)
 
-        setTimeout(() => {
+        shell.exec(cmd, {async: true}, function(code, stdout, stderr) {     
 
-            shell.exec(cmd, {async: false}, function(code, stdout, stderr) {     
+        console.log("Realizando impressão do ingresso ", idTicket)
+        console.log('Exit code:', code);
+        console.log('Program output:', stdout);
+        console.log('Program stderr:', stderr)
 
-                console.log('Exit code:', code);
-                console.log('Program output:', stdout);
-                console.log('Program stderr:', stderr)
-    
-                resolve()        
-         });
-
-        }, 1000)                
+        resolve()        
+     });
+           
   });
 }
 
